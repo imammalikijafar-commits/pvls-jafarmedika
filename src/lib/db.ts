@@ -1,7 +1,6 @@
 // ============================================================
 // DPEMS Database Client
-// Supabase — matching Schema v1.0.1
-// Lazy initialization to avoid build-time crashes
+// Supabase — matching Schema v2.0.0 FINAL (Kuesioner Integrative Medicine)
 // ============================================================
 
 import { createAdminClient } from '@/lib/supabase/server'

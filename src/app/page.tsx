@@ -24,6 +24,12 @@ import {
   Layers,
   Check,
   Lock,
+  MessageSquareHeart,
+  BadgeDollarSign,
+  Leaf,
+  Brain,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react'
 
 /* ════════════════════════════════════════════════════════════════════
@@ -450,7 +456,8 @@ function HeroSection() {
           transition={{ duration: 0.6, delay: 0.5, ease: EASE_OUT }}
         >
           Mengukur &amp; meningkatkan kualitas layanan integratif — akupunktur,
-          herbal, dan rehabilitasi stroke — dengan pendekatan
+          herbal, dan terapi adjuvan — untuk pasien stroke, nyeri kronis,
+          hingga pemeliharaan kesehatan, dengan pendekatan
           evidence-based dan islamic holistic care.
         </motion.p>
 
@@ -499,7 +506,7 @@ function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.9 }}
         >
-          {['SERVQUAL Framework', 'VAS', 'NPS', 'Islamic Holistic Care'].map(
+          {['SERVQUAL Framework', 'VAS / Barthel / ISI', 'WHOQOL-BREF', 'NPS', 'Islamic Holistic Care', 'WTP'].map(
             (badge) => (
               <span
                 key={badge}
@@ -530,6 +537,7 @@ const trustItems = [
   { label: 'Antarmuka Ramah Lansia', icon: Heart },
   { label: 'Real-time Analytics', icon: BarChart3 },
   { label: 'Data Terenkripsi & Aman', icon: Lock },
+  { label: 'Save & Resume Survei', icon: Zap },
   { label: 'Export PDF & Excel', icon: FileText },
 ]
 
@@ -745,46 +753,67 @@ function MetricsSection() {
 
 const features = [
   {
-    icon: ClipboardList,
-    title: 'Survei SERVQUAL',
+    icon: Users,
+    title: 'A — Data Responden',
     description:
-      'Penilaian 5 dimensi kualitas pelayanan — Tangibles, Reliability, Responsiveness, Assurance, dan Empathy — untuk evaluasi menyeluruh.',
-    tags: ['5 Dimensi', 'Evidence-based', 'Tervalidasi'],
+      'Pengumpulan data demografi pasien meliputi usia, jenis kelamin, pendidikan, pekerjaan, pendapatan, jenis pasien, kondisi penyakit, jumlah kunjungan, dan sumber rujukan — sebagai basis segmentasi dan analisis multivariat.',
+    tags: ['9 Item', 'Demografi', 'Segmentasi'],
+  },
+  {
+    icon: ClipboardList,
+    title: 'B — Kualitas Layanan (SERVQUAL)',
+    description:
+      'Penilaian 5 dimensi kualitas pelayanan — Tangibles, Reliability, Responsiveness, Assurance, dan Empathy — dengan 21 item Likert untuk evaluasi menyeluruh terhadap layanan akupunktur dan herbal.',
+    tags: ['5 Dimensi', '21 Item', 'Evidence-based'],
+  },
+  {
+    icon: Leaf,
+    title: 'C — Layanan Herbal',
+    description:
+      'Evaluasi kepuasan terhadap layanan herbal secara kondisional — hanya ditampilkan kepada pasien yang mendapat resep herbal. Mencakup efektivitas, kejelasan informasi, ketersediaan, dan kepuasan keseluruhan terhadap produk herbal.',
+    tags: ['Kondisional', '6 Item', 'Herbal Medicine'],
+  },
+  {
+    icon: Brain,
+    title: 'D — Persepsi Terapi',
+    description:
+      'Pengukuran pemahaman pasien terhadap peran terapi integratif sebagai pendukung (bukan pengganti) pengobatan konvensional, termasuk kejelasan penjelasan dokter dan kenyamanan bertanya.',
+    tags: ['4 Item', 'Likert', 'Adjuvan Therapy'],
   },
   {
     icon: Activity,
-    title: 'Pain Tracking VAS',
+    title: 'E — Outcome Klinis',
     description:
-      'Pemantauan tingkat nyeri sebelum dan sesudah terapi menggunakan Visual Analogue Scale, dilengkapi grafik tren per kunjungan.',
-    tags: ['VAS 0-10', 'Tren Kunjungan'],
+      'Pemantauan outcome klinis secara kondisional berdasarkan keluhan pasien: VAS (nyeri kronis), Barthel Index (stroke), Insomnia Severity Index (gangguan tidur), dan WHOQOL-BREF (wellness).',
+    tags: ['Kondisional', 'VAS', 'Barthel', 'ISI', 'WHOQOL'],
   },
   {
     icon: Sparkles,
-    title: 'Spiritual Care Index',
+    title: 'F — Spiritual & Holistik',
     description:
-      'Pengukuran kenyamanan spiritual dan kecocokan budaya pasien lansia, mencakup aspek islami holistik dalam perawatan.',
-    tags: ['Islamic Care', 'Lansia', 'Holistik'],
+      'Pengukuran kenyamanan spiritual dan kecocokan budaya islami — mencakup 9 dimensi: adab & etika, gender concordance, waktu ibadah, jaminan halal, pengenalan tibb nabawi, aktivasi spiritual, kedamaian holistik, komunikasi spiritual, dan reverse-coded item.',
+    tags: ['9 Dimensi', 'Islamic Care', 'Holistik'],
   },
   {
     icon: TrendingUp,
-    title: 'NPS Real-time',
+    title: 'G — NPS & Loyaltas',
     description:
-      'Net Promoter Score untuk mengukur loyalitas dan rekomendasi pasien secara real-time dengan dashboard interaktif.',
-    tags: ['Real-time', 'Dashboard'],
+      'Net Promoter Score (0–10) untuk mengukur loyalitas dan rekomendasi pasien, dilengkapi rencana kunjungan ulang, riwayat rekomendasi, jumlah rekomendasi, dan kesediaan bayar jika harga naik 50%.',
+    tags: ['NPS', '5 Item', 'Loyaltas'],
   },
   {
-    icon: Route,
-    title: 'Recovery Journey',
+    icon: MessageSquareHeart,
+    title: 'H — Masukan & Saran',
     description:
-      'Visualisasi perjalanan pemulihan pasien stroke dari kunjungan ke kunjungan — melihat progres fungsi motorik secara visual.',
-    tags: ['Stroke Rehab', 'Longitudinal'],
+      'Feedback terstruktur multi-kategori — hal yang disukai (4 kategori, 16 item checkbox) dan saran perbaikan (5 kategori, 20 item checkbox), dilengkapi kolom testimoni bebas.',
+    tags: ['Multi-kategori', '36+ Item', 'Testimoni'],
   },
   {
-    icon: FileText,
-    title: 'Laporan Otomatis',
+    icon: BadgeDollarSign,
+    title: 'I — Kesediaan Bayar (WTP)',
     description:
-      'Export laporan analitik dalam format PDF dan Excel untuk keperluan akreditasi, penelitian, dan pengambilan keputusan.',
-    tags: ['PDF Export', 'Excel', 'Akreditasi'],
+      'Willingness to Pay dengan 4 instrumen: biaya hari ini, reaksi kenaikan 20%, minat paket diskon 4 sesi (-10%), dan payment card untuk batas maksimal harga yang dapat diterima pasien.',
+    tags: ['4 Item', 'Payment Card', 'Ekonomi'],
   },
 ]
 
@@ -811,8 +840,8 @@ function FeaturesSection() {
           className="mx-auto mt-4 max-w-2xl text-base lp-font-body sm:text-lg"
           style={{ color: SLATE[500] }}
         >
-          Enam modul integratif yang dirancang khusus untuk kebutuhan rumah
-          sakit dengan layanan kedokteran integratif
+          Sembilan bagian kuesioner integratif yang dirancang khusus untuk
+          kebutuhan rumah sakit dengan layanan kedokteran integratif
         </p>
       </FadeUp>
 
@@ -844,7 +873,7 @@ function FeaturesSection() {
               className="mb-3 inline-block text-xs font-semibold lp-font-body tracking-wider"
               style={{ color: TEAL.deep }}
             >
-              {String(i + 1).padStart(2, '0')} — Kuesioner
+              {String(i + 1).padStart(2, '0')} — Bagian
             </span>
 
             {/* Icon */}
@@ -908,9 +937,9 @@ const steps = [
   {
     icon: Clock,
     step: '02',
-    title: 'Isi Survei 2 Menit',
+    title: 'Isi Survei 13–15 Menit',
     description:
-      'Pertanyaan dirancang mudah dipahami dengan font besar, bahasa jelas, dan antarmuka ramah lansia. Rata-rata pengisian hanya 2 menit.',
+      'Kuesioner 9 bagian (A–I) dirancang sesuai standar penelitian akademik — data responden, SERVQUAL, layanan herbal, persepsi terapi, outcome klinis kondisional (VAS/Barthel/ISI/WHOQOL), spiritual & holistik, NPS & loyaltas, feedback terstruktur, dan kesediaan bayar.',
   },
   {
     icon: MonitorDot,
@@ -1014,19 +1043,49 @@ function MethodologySection() {
       icon: Layers,
       title: 'SERVQUAL',
       source: 'Parasuraman et al., 1988',
-      desc: '5 dimensi kualitas layanan — Tangibles, Reliability, Responsiveness, Assurance, dan Empathy — untuk evaluasi menyeluruh pengalaman pasien.',
+      desc: '5 dimensi kualitas layanan — Tangibles, Reliability, Responsiveness, Assurance, dan Empathy — dengan 21 item Likert untuk evaluasi menyeluruh pengalaman pasien terhadap layanan integratif.',
     },
     {
       icon: Activity,
       title: 'Visual Analogue Scale',
-      source: 'VAS 0-10',
-      desc: 'Pengukuran subjektif tingkat nyeri pasien sebelum dan sesudah terapi akupuntur, dilengkapi grafik tren per kunjungan.',
+      source: 'Huskisson, 1974',
+      desc: 'Pengukuran subjektif intensitas nyeri (0–10) sebelum dan sesudah terapi — digunakan untuk kondisi nyeri sendi, punggung, migrain, dan kondisi neurologis lainnya.',
+    },
+    {
+      icon: Route,
+      title: 'Barthel Index',
+      source: 'Mahoney & Barthel, 1965',
+      desc: 'Skala kemandirian aktivitas sehari-hari (ADL) dengan 10 komponen, skor 0–100 — mengukur progres rehabilitasi pasien stroke/pasca stroke secara longitudinal.',
     },
     {
       icon: Star,
+      title: 'Insomnia Severity Index',
+      source: 'Morin, 2011',
+      desc: '7 item penilaian keparahan gangguan tidur (skor 0–28) — mengukur severity insomnia pasien sebelum dan selama terapi integratif.',
+    },
+    {
+      icon: TrendingUp,
       title: 'Net Promoter Score',
       source: 'Reichheld, 2003',
-      desc: 'Indikator loyalitas dan rekomendasi pasien terhadap layanan rumah sakit, diukur secara real-time melalui dashboard.',
+      desc: 'Indikator loyalitas dan rekomendasi pasien terhadap layanan rumah sakit (skor 0–10), dilengkapi data rencana kunjungan ulang, riwayat rekomendasi, dan kesediaan bayar.',
+    },
+    {
+      icon: ShieldCheck,
+      title: 'WHOQOL-BREF',
+      source: 'WHO, 1996',
+      desc: 'Instrumen kualitas hidup dari World Health Organization dengan 3 item yang mengukur aspek fisik, psikologis, dan sosial pasien selama terapi integratif.',
+    },
+    {
+      icon: Sparkles,
+      title: 'Islamic Holistic Care',
+      source: 'Pendekatan Kontekstual',
+      desc: '9 dimensi spiritual yang mencakup adab & etika islami, gender concordance, waktu ibadah, jaminan halal, tibb nabawi, aktivasi spiritual, kedamaian holistik, komunikasi spiritual, dan dukungan holistik.',
+    },
+    {
+      icon: BadgeDollarSign,
+      title: 'Willingness to Pay',
+      source: 'Payment Card Method',
+      desc: 'Pengukuran kesediaan membayar pasien melalui 4 instrumen — biaya aktual, reaksi kenaikan harga, minat paket diskon, dan payment card untuk menentukan batas harga maksimal.',
     },
   ]
 
@@ -1052,9 +1111,9 @@ function MethodologySection() {
           className="mt-4 max-w-2xl text-base leading-relaxed lp-font-body sm:text-lg"
           style={{ color: SLATE[500] }}
         >
-          Sistem DPEMS dibangun berdasarkan kerangka penelitian yang
+          Sistem DPEMS dibangun berdasarkan 8 kerangka penelitian yang
           telah teruji dan diakui secara internasional dalam bidang
-          manajemen kesehatan dan patient experience.
+          manajemen kesehatan, patient experience, dan ilmu ekonomi kesehatan.
         </p>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -1211,7 +1270,7 @@ function FooterSection() {
     { label: 'Isi Survei', href: '/survey/consent' },
   ]
 
-  const badges = ['Integrative Medicine', 'Evidence-based', 'Patient Experience']
+  const badges = ['Integrative Medicine', 'Evidence-based', 'Patient Experience', 'WTP']
 
   return (
     <footer style={{ backgroundColor: DARK[950] }}>
@@ -1296,13 +1355,10 @@ function FooterSection() {
               className="lp-font-display text-base font-bold"
               style={{ color: '#FFFFFF' }}
             >
-              Imam Maliki Ja&apos;far
+              Imam Maliki
             </p>
             <p className="mt-1 text-sm lp-font-body" style={{ color: SLATE[500] }}>
-              Program Studi Magister Administrasi Rumah Sakit (MARS)
-            </p>
-            <p className="mt-1 text-sm lp-font-body" style={{ color: SLATE[500] }}>
-              Universitas Muhammadiyah Surakarta (UMS)
+              Program Studi Magister
             </p>
             <p className="text-sm lp-font-body" style={{ color: SLATE[500] }}>
               RSU Ja&apos;far Medika
@@ -1340,7 +1396,7 @@ function FooterSection() {
                   Responden
                 </span>
                 <p className="text-sm font-medium text-white lp-font-body">
-                  Pasien Stroke &amp; Nyeri Kronis
+                  Pasien Stroke, Nyeri Kronis, &amp; Wellness
                 </p>
               </li>
               <li>
@@ -1351,7 +1407,7 @@ function FooterSection() {
                   Metode
                 </span>
                 <p className="text-sm font-medium text-white lp-font-body">
-                  SERVQUAL + VAS + NPS
+                  SERVQUAL + VAS + Barthel + ISI + WHOQOL + NPS + WTP
                 </p>
               </li>
             </ul>

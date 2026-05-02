@@ -7,7 +7,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { User } from 'lucide-react'
-import { AGE_RANGES, EDUCATIONS, OCCUPATIONS, PATIENT_TYPES, CONDITION_TYPES, VISIT_COUNTS, REFERRAL_SOURCES } from '@/lib/validators'
+import { AGE_RANGES, EDUCATIONS, OCCUPATIONS, INCOME_RANGES, PATIENT_TYPES, CONDITION_TYPES, VISIT_COUNTS, REFERRAL_SOURCES } from '@/lib/validators'
 import type { FormData } from './types'
 
 interface SectionProps {
@@ -72,7 +72,7 @@ export default function SectionA({ form, updateField }: SectionProps) {
         <div className="p-5 sm:p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField step="A1" label="Usia Anda" value={form.age_range} onChange={(v) => updateField('age_range', v)} options={[...AGE_RANGES]} placeholder="Pilih usia" />
-            <SelectField step="A2" label="Jenis Kelamin" value={form.gender} onChange={(v) => updateField('gender', v)} options={['L', 'P']} placeholder="Pilih" />
+            <SelectField step="A2" label="Jenis Kelamin" value={form.gender} onChange={(v) => updateField('gender', v)} options={['Laki-laki', 'Perempuan']} placeholder="Pilih" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -90,10 +90,39 @@ export default function SectionA({ form, updateField }: SectionProps) {
             </div>
           </div>
 
-          <SelectField step="A5" label="Jenis Pembayaran" value={form.patient_type} onChange={(v) => updateField('patient_type', v)} options={[...PATIENT_TYPES]} placeholder="Pilih" />
-          <SelectField step="A6" label="Keluhan Utama" value={form.condition_type} onChange={(v) => updateField('condition_type', v)} options={[...CONDITION_TYPES]} placeholder="Pilih keluhan" />
-          <SelectField step="A7" label='Kunjungan Ke-' value={form.visit_count} onChange={(v) => updateField('visit_count', v)} options={[...VISIT_COUNTS]} placeholder="Pilih" />
-          <SelectField step="A8" label="Sumber Rujukan" value={form.referral_source} onChange={(v) => updateField('referral_source', v)} options={[...REFERRAL_SOURCES]} placeholder="Pilih" />
+          {/* A5 - Pendapatan (NEW) */}
+          <SelectField step="A5" label="Pendapatan bulanan rumah tangga (bersih)" value={form.income_range} onChange={(v) => updateField('income_range', v)} options={[...INCOME_RANGES]} placeholder="Pilih" />
+
+          {/* A6 - Jenis Pembayaran (updated label) */}
+          <div className="space-y-2">
+            <SelectField step="A6" label="Jenis pembayaran untuk terapi ini" value={form.patient_type} onChange={(v) => updateField('patient_type', v)} options={[...PATIENT_TYPES]} placeholder="Pilih" />
+            {form.patient_type === 'Lainnya' && (
+              <Input
+                placeholder="Tuliskan jenis pembayaran Anda..."
+                value={form.patient_type}
+                onChange={(e) => updateField('patient_type', e.target.value)}
+                className="h-10 text-sm rounded-xl border-slate-200 font-[family-name:var(--font-body)]"
+              />
+            )}
+          </div>
+
+          {/* A7 - Kondisi / Keluhan Utama (BUG FIX: now writes to condition_type_other) */}
+          <div className="space-y-2">
+            <SelectField step="A7" label="Kondisi / Keluhan Utama" value={form.condition_type} onChange={(v) => updateField('condition_type', v)} options={[...CONDITION_TYPES]} placeholder="Pilih keluhan" />
+            {form.condition_type === 'Lainnya' && (
+              <Input
+                placeholder="Tuliskan keluhan Anda..."
+                value={form.condition_type_other}
+                onChange={(e) => updateField('condition_type_other', e.target.value)}
+                className="h-10 text-sm rounded-xl border-slate-200 font-[family-name:var(--font-body)]"
+              />
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SelectField step="A8" label='Kunjungan Ke-' value={form.visit_count} onChange={(v) => updateField('visit_count', v)} options={[...VISIT_COUNTS]} placeholder="Pilih" />
+            <SelectField step="A9" label="Sumber Rujukan" value={form.referral_source} onChange={(v) => updateField('referral_source', v)} options={[...REFERRAL_SOURCES]} placeholder="Pilih" />
+          </div>
         </div>
       </div>
     </motion.div>

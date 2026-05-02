@@ -38,7 +38,7 @@ export default function SectionB({ form, updateField }: SectionProps) {
         </div>
       </div>
 
-      {/* SERVQUAL Dimension Cards */}
+      {/* SERVQUAL Dimension Cards — 21 items total (5+4+4+4+4) */}
       <div className="space-y-4">
         {servqualSections.map((section, si) => (
           <motion.div

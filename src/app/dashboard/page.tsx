@@ -5,7 +5,8 @@ import {
   Users, TrendingDown, Star, Heart, Activity, MessageCircle,
   BarChart3, RefreshCw, Shield, AlertTriangle, CheckCircle2,
   Bell, Search, ChevronLeft, ChevronRight, FileSpreadsheet, FileText,
-  X, Filter, Database, SlidersHorizontal, ChevronDown, Eye, Menu, Home
+  X, Filter, Database, SlidersHorizontal, ChevronDown, Eye, Menu, Home,
+  Leaf, Pill, Wallet, Repeat, ThumbsUp, Moon, BookOpen
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
@@ -26,7 +27,7 @@ const NPS_COLORS = ['#059669', '#d97706', '#dc2626']
 
 const CONDITION_TYPES = [
   'Stroke / Pasca Stroke',
-  'Nyeri Sendi (Rematik/OA)',
+  'Nyeri Sendi (Rematik / OA)',
   'Nyeri Punggung / Saraf Kejepit',
   'Migrain / Sakit Kepala Kronis',
   'Gangguan Tidur (Insomnia)',
@@ -55,12 +56,46 @@ interface SurveyRow {
   testimonial: string | null
   education: string | null
   occupation: string | null
+  occupation_other: string | null
+  income_range: string | null
   patient_type: string | null
   visit_count: string | null
   condition_change: string | null
+  condition_type_other: string | null
+  referral_source: string | null
   herbal_prescribed: boolean | null
+  herb_explanation: number | null
+  herb_usage_guide: number | null
+  herb_safety_trust: number | null
+  herb_availability: number | null
+  herb_affordability: number | null
+  herb_pharmacist: number | null
   visit_plan: string | null
   has_recommended: string | null
+  recommendation_count: string | null
+  wtp_price_increase: number | null
+  wtp_cost_today: number | null
+  wtp_increase_20: string | null
+  wtp_package_interest: string | null
+  wtp_max_acceptable: string | null
+  h1_liked: string[] | null
+  h1_liked_other: string | null
+  h2_suggested: string[] | null
+  h2_suggested_other: string | null
+  d1_clarity_role: number | null
+  d2_clarity_explanation: number | null
+  d3_clarity_comfortable: number | null
+  d4_clarity_specialist: number | null
+  // Spiritual v2.0 (F1-F9)
+  f1_adab_islami: number | null
+  f2_gender_concordance: number | null
+  f3_prayer_accommodation: number | null
+  f4_halal_assurance: number | null
+  f5_tibb_nabawi: number | null
+  f6_spiritual_activation: number | null
+  f7_holistic_peace: number | null
+  f8_spiritual_communication: number | null
+  f9_reverse_coded: number | null
   units: { name: string } | null
 }
 
@@ -239,9 +274,15 @@ export default function DashboardPage() {
   ] : []
 
   const spiritualData = data ? [
-    { dimension: 'Spiritual Comfort', score: data.spiritualAvg.spiritualComfort },
-    { dimension: 'Respek Budaya', score: data.spiritualAvg.culturalRespect },
-    { dimension: 'Rasa Kekeluargaan', score: data.spiritualAvg.familyFeeling },
+    { dimension: 'Adab & Etika Islami', score: data.spiritualAvg.f1AdabIslami, key: 'f1' },
+    { dimension: 'Gender Concordance', score: data.spiritualAvg.f2GenderConcordance, key: 'f2' },
+    { dimension: 'Waktu Shalat', score: data.spiritualAvg.f3PrayerAccommodation, key: 'f3' },
+    { dimension: 'Jaminan Halal & Thayyib', score: data.spiritualAvg.f4HalalAssurance, key: 'f4' },
+    { dimension: 'Tibb Nabawi', score: data.spiritualAvg.f5TibbNabawi, key: 'f5' },
+    { dimension: 'Aktivasi Spiritual', score: data.spiritualAvg.f6SpiritualActivation, key: 'f6' },
+    { dimension: 'Ketenangan Holistik', score: data.spiritualAvg.f7HolisticPeace, key: 'f7' },
+    { dimension: 'Komunikasi Spiritual', score: data.spiritualAvg.f8SpiritualCommunication, key: 'f8' },
+    { dimension: 'Reverse-Coded*', score: data.spiritualAvg.f9Reversed, key: 'f9', isReversed: true },
   ] : []
 
   // Filtered feedback
@@ -284,7 +325,7 @@ export default function DashboardPage() {
     {
       icon: TrendingDown, title: 'Pengurangan Nyeri',
       value: `${data.avgPainReduction}%`,
-      subtitle: 'VAS Score reduction',
+      subtitle: 'Kondisi Nyeri (VAS)',
       trend: data.avgPainReduction > 0 ? 'up' : 'down' as const,
       color: 'blue' as const,
     },
@@ -608,7 +649,7 @@ export default function DashboardPage() {
                     <CheckCircle2 className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-teal-800 text-sm font-[family-name:var(--font-display)]">Top Diagnosis</p>
+                    <p className="font-bold text-teal-800 text-sm font-[family-name:var(--font-display)]">Top Kondisi Pasien</p>
                     {data.topDiagnosis ? (
                       <>
                         <p className="text-teal-700 text-xs mt-1 truncate">{data.topDiagnosis.name}</p>
@@ -652,25 +693,243 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Spiritual Wellness */}
+              {/* Spiritual Wellness — 9 Dimensions (F1-F9, F9 Reversed) */}
               <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-5">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
                     <Shield className="w-4 h-4 text-white" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-blue-800 text-sm font-[family-name:var(--font-display)]">Spiritual Wellness</p>
-                    <div className="mt-2 space-y-1">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-blue-800 text-sm font-[family-name:var(--font-display)]">Spiritual Wellness (9D)</p>
+                      <span className="text-[11px] font-bold text-blue-700 bg-blue-200/60 px-2 py-0.5 rounded-full">
+                        {data.spiritualAvg.overall.toFixed(2)}/5
+                      </span>
+                    </div>
+                    {/* F9 Raw vs Reversed indicator */}
+                    <div className="mt-1 flex items-center gap-2 text-[10px] text-blue-500">
+                      <span>F9 Raw: {data.spiritualAvg.f9ReverseCoded.toFixed(1)}</span>
+                      <span className="text-blue-300">|</span>
+                      <span className="font-semibold text-purple-600">Reversed: {data.spiritualAvg.f9Reversed.toFixed(1)}</span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 gap-1 max-h-48 overflow-y-auto pr-1">
                       {spiritualData.map((s) => (
-                        <div key={s.dimension} className="flex items-center justify-between text-[11px]">
-                          <span className="text-blue-600">{s.dimension}</span>
-                          <span className="font-bold text-blue-700">{s.score.toFixed(2)}/5</span>
+                        <div key={s.key} className="space-y-0.5">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className={`text-blue-600 truncate ${'isReversed' in s && s.isReversed ? 'italic' : ''}`}>
+                              {s.dimension}
+                              {'isReversed' in s && s.isReversed && <span className="text-purple-400 ml-1">(reversed)</span>}
+                            </span>
+                            <span className="font-bold text-blue-700 shrink-0 ml-2">{s.score.toFixed(2)}</span>
+                          </div>
+                          <div className="w-full bg-blue-200/40 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className={`rounded-full h-1.5 transition-all ${'isReversed' in s && s.isReversed ? 'bg-purple-500' : 'bg-blue-500'}`} 
+                              style={{ width: `${(s.score / 5) * 100}%` }} 
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
-                    <p className="text-blue-500 text-[11px] mt-1">
-                      Rata-rata: {((data.spiritualAvg.spiritualComfort + data.spiritualAvg.culturalRespect + data.spiritualAvg.familyFeeling) / 3).toFixed(2)}/5
-                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Clarity of Therapeutic Role (D) — NEW v2.0 ─── */}
+            {data.clarityAvg && (
+              <div className="bg-linear-to-br from-violet-50 to-violet-100 rounded-xl border border-violet-200 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                    <BookOpen className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-violet-800 text-sm font-[family-name:var(--font-display)]">Clarity of Role</p>
+                      <span className="text-[11px] font-bold text-violet-700 bg-violet-200/60 px-2 py-0.5 rounded-full">
+                        {data.clarityAvg.overall.toFixed(2)}/5
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 gap-1">
+                      {[
+                        { label: 'Peran Terapi (D1)', score: data.clarityAvg.roleClarity },
+                        { label: 'Penjelasan (D2)', score: data.clarityAvg.explanationClarity },
+                        { label: 'Kenyamanan (D3)', score: data.clarityAvg.comfortableClarity },
+                        { label: 'Spesialis (D4)', score: data.clarityAvg.specialistClarity },
+                      ].map((d) => (
+                        <div key={d.label} className="space-y-0.5">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-violet-600 truncate">{d.label}</span>
+                            <span className="font-bold text-violet-700 shrink-0 ml-2">{d.score.toFixed(2)}</span>
+                          </div>
+                          <div className="w-full bg-violet-200/40 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-violet-500 rounded-full h-1.5 transition-all" style={{ width: `${(d.score / 5) * 100}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ─── Loyaltas & WTP Section ─── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Loyalty: Visit Plan & Recommendation */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                  <Repeat className="w-4 h-4 text-teal-600" />
+                  Loyaltas Pasien
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Rencana kunjungan & rekomendasi</p>
+                <div className="mt-4 space-y-5">
+                  {/* Visit Plan Distribution */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Rencana Kunjungan</p>
+                    {Object.entries(data.loyaltyData.visitPlanDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.loyaltyData.visitPlanDist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-teal-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Has Recommended Distribution */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Sudah Merekomendasikan</p>
+                    {Object.entries(data.loyaltyData.hasRecommendedDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.loyaltyData.hasRecommendedDist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className={`rounded-full h-2.5 transition-all ${label === 'Ya' ? 'bg-emerald-500' : 'bg-slate-400'}`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-12 shrink-0">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Recommendation Count Distribution */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Jumlah Orang Direkomendasikan</p>
+                    {Object.entries(data.loyaltyData.recommendationCountDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.loyaltyData.recommendationCountDist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-teal-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* WTP Price Increase Distribution (G5) */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">WTP Price Increase (G5)</p>
+                    {Object.entries(data.loyaltyData.wtpPriceIncreaseDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.loyaltyData.wtpPriceIncreaseDist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-amber-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-8 shrink-0">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Willingness to Pay */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                  <Wallet className="w-4 h-4 text-amber-500" />
+                  Willingness to Pay (WTP)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Persepsi biaya & kemauan membayar</p>
+                <div className="mt-4 space-y-4">
+                  {/* Avg Cost Today */}
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg border border-amber-200">
+                    <div>
+                      <p className="text-[11px] text-amber-600 font-medium">Rata-rata Biaya Hari Ini</p>
+                      <p className="text-lg font-bold text-amber-800 font-[family-name:var(--font-display)]">
+                        Rp {data.wtpData.avgCostToday.toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-amber-500 bg-amber-200/50 px-2 py-0.5 rounded-full">
+                      {data.wtpData.respondentCount} responden
+                    </span>
+                  </div>
+                  {/* Increase 20% Reaction */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Reaksi Kenaikan 20%</p>
+                    {Object.entries(data.wtpData.increase20Dist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.wtpData.increase20Dist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className={`rounded-full h-2.5 transition-all ${
+                              label.toLowerCase().includes('tetap') || label.toLowerCase().includes('ya')
+                                ? 'bg-emerald-500'
+                                : label.toLowerCase().includes('tidak')
+                                ? 'bg-red-400'
+                                : 'bg-amber-500'
+                            }`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Package Interest */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Minat Paket Layanan</p>
+                    {Object.entries(data.wtpData.packageInterestDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.wtpData.packageInterestDist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-teal-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Max Acceptable Distribution */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Biaya Maks Diterima</p>
+                    {Object.entries(data.wtpData.maxAcceptableDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
+                      const total = Object.values(data.wtpData.maxAcceptableDist).reduce((s, v) => s + v, 0)
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={label} className="flex items-center gap-2 mb-1.5">
+                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-blue-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
+                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -689,9 +948,9 @@ export default function DashboardPage() {
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
                   <Activity className="w-4 h-4 text-red-500" />
-                  Pengurangan Nyeri per Diagnosis
+                  Outcome Klinis per Diagnosis
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Rata-rata penurunan VAS Score (%)</p>
+                <p className="text-xs text-slate-500 mt-0.5">Rata-rata penurunan VAS Score (%) untuk kondisi nyeri</p>
                 <div className="h-72 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -819,6 +1078,181 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* ─── Herbal & Adjuvant Therapy Row ─── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Layanan Herbal */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                  <Leaf className="w-4 h-4 text-emerald-500" />
+                  Layanan Herbal
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                    data.herbalAvg.prescribedPct >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {data.herbalAvg.prescribedPct}% Diresepkan ({data.herbalAvg.prescribedCount} pasien)
+                  </span>
+                </div>
+                <div className="space-y-3 mt-4">
+                  {[
+                    { label: 'Penjelasan Herbal', score: data.herbalAvg.explanation },
+                    { label: 'Panduan Penggunaan', score: data.herbalAvg.usageGuide },
+                    { label: 'Kepercayaan Keamanan', score: data.herbalAvg.safetyTrust },
+                    { label: 'Ketersediaan', score: data.herbalAvg.availability },
+                    { label: 'Terjangkauan', score: data.herbalAvg.affordability },
+                    { label: 'Konsultasi Apoteker', score: data.herbalAvg.pharmacist },
+                  ].map((item) => (
+                    <div key={item.label} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-slate-700">{item.label}</span>
+                        <span className={`text-xs font-bold ${item.score >= 4 ? 'text-teal-600' : item.score >= 3 ? 'text-amber-600' : 'text-red-500'}`}>
+                          {item.score.toFixed(2)} / 5
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full transition-all ${item.score >= 4 ? 'bg-teal-500' : item.score >= 3 ? 'bg-amber-500' : 'bg-red-400'}`}
+                          style={{ width: `${(item.score / 5) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clarity of Therapeutic Role (D1-D4) */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                  <Pill className="w-4 h-4 text-violet-500" />
+                  Clarity of Therapeutic Role (D1-D4)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Klaritas peran terapis & kenyamanan pasien (v2.0)</p>
+                <div className="flex items-center justify-between mt-2 mb-3">
+                  <span className="text-xs text-slate-400">Rata-rata Keseluruhan</span>
+                  <span className="text-sm font-bold text-violet-600">{data.clarityAvg.overall.toFixed(2)} / 5</span>
+                </div>
+                <div className="space-y-4">
+                  {[
+                    { label: 'D1 Klaritas Role Terapis', score: data.clarityAvg.roleClarity },
+                    { label: 'D2 Klaritas Penjelasan', score: data.clarityAvg.explanationClarity },
+                    { label: 'D3 Kenyamanan', score: data.clarityAvg.comfortableClarity },
+                    { label: 'D4 Spesialis Terpercaya', score: data.clarityAvg.specialistClarity },
+                  ].map((item) => (
+                    <div key={item.label} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-slate-700">{item.label}</span>
+                        <span className={`text-xs font-bold ${item.score >= 4 ? 'text-teal-600' : item.score >= 3 ? 'text-amber-600' : 'text-red-500'}`}>
+                          {item.score.toFixed(2)} / 5
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full transition-all ${item.score >= 4 ? 'bg-teal-500' : item.score >= 3 ? 'bg-amber-500' : 'bg-red-400'}`}
+                          style={{ width: `${(item.score / 5) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Clinical Outcome Subtypes ─── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Barthel Index */}
+              {data.clinicalData.barthel.respondentCount > 0 && (
+                <div className="bg-linear-to-br from-teal-50 to-teal-100 rounded-xl border border-teal-200 p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 bg-teal-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <Activity className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-teal-800 text-sm font-[family-name:var(--font-display)]">Barthel Index</p>
+                      <p className="text-[10px] text-teal-500 mt-0.5">{data.clinicalData.barthel.respondentCount} responden (Stroke)</p>
+                      <div className="mt-3 space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-teal-600">Skor Awal</span>
+                          <span className="font-bold text-teal-800">{data.clinicalData.barthel.avgFirst.toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-teal-600">Skor Sekarang</span>
+                          <span className="font-bold text-teal-800">{data.clinicalData.barthel.avgCurrent.toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-teal-600">Peningkatan</span>
+                          <span className={`font-bold ${data.clinicalData.barthel.improvementPct > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {data.clinicalData.barthel.improvementPct > 0 ? '+' : ''}{data.clinicalData.barthel.improvementPct.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs pt-1 border-t border-teal-200">
+                          <span className="text-teal-600">Level Ketergantungan</span>
+                          <span className="font-bold text-teal-800">
+                            {data.clinicalData.barthel.avgScoreCurrent >= 60 ? 'Ringan' : data.clinicalData.barthel.avgScoreCurrent >= 40 ? 'Sedang' : 'Berat'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ISI — Insomnia Severity Index */}
+              {data.clinicalData.isi.respondentCount > 0 && (
+                <div className="bg-linear-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <Moon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-indigo-800 text-sm font-[family-name:var(--font-display)]">ISI (Insomnia)</p>
+                      <p className="text-[10px] text-indigo-500 mt-0.5">{data.clinicalData.isi.respondentCount} responden</p>
+                      <div className="mt-3 space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-indigo-600">Rata-rata Skor</span>
+                          <span className="font-bold text-indigo-800">{data.clinicalData.isi.avgScore.toFixed(1)} / 28</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs pt-1 border-t border-indigo-200">
+                          <span className="text-indigo-600">Severity</span>
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            data.clinicalData.isi.severity === 'Tidak Ada Insomnia' ? 'bg-emerald-100 text-emerald-700'
+                            : data.clinicalData.isi.severity === 'Subklinis' ? 'bg-amber-100 text-amber-700'
+                            : data.clinicalData.isi.severity === 'Sedang' ? 'bg-orange-100 text-orange-700'
+                            : 'bg-red-100 text-red-700'
+                          }`}>
+                            {data.clinicalData.isi.severity}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* WHOQOL-BREF — Wellness */}
+              {data.clinicalData.wellness.respondentCount > 0 && (
+                <div className="bg-linear-to-br from-rose-50 to-rose-100 rounded-xl border border-rose-200 p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 bg-rose-500 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <Heart className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-rose-800 text-sm font-[family-name:var(--font-display)]">WHOQOL-BREF</p>
+                      <p className="text-[10px] text-rose-500 mt-0.5">{data.clinicalData.wellness.respondentCount} responden (Wellness)</p>
+                      <div className="mt-3 space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-rose-600">Rata-rata Skor</span>
+                          <span className="font-bold text-rose-800">{data.clinicalData.wellness.avgScore.toFixed(1)} / 5</span>
+                        </div>
+                        <div className="w-full bg-rose-200/40 rounded-full h-2 overflow-hidden mt-1">
+                          <div className="bg-rose-500 rounded-full h-2 transition-all" style={{ width: `${(data.clinicalData.wellness.avgScore / 5) * 100}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -918,7 +1352,7 @@ export default function DashboardPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Cari testimoni, saran, atau pengalaman..."
+                    placeholder="Cari testimoni, pengalaman terbaik, atau saran perbaikan..."
                     value={fbSearch}
                     onChange={(e) => setFbSearch(e.target.value)}
                     onFocus={() => setFbFilterOpen(true)}
@@ -1068,6 +1502,28 @@ export default function DashboardPage() {
                           <span className="text-emerald-600 font-medium text-xs">Pengalaman Terbaik: </span>
                           {fb.bestExperience}
                         </p>
+                      )}
+                      {/* H1 Liked Items */}
+                      {fb.h1Liked && fb.h1Liked.length > 0 && (
+                        <div className="pl-10 flex flex-wrap gap-1.5">
+                          <ThumbsUp className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
+                          {fb.h1Liked.map((item, idx) => (
+                            <span key={idx} className="inline-flex items-center text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* H2 Suggested Items */}
+                      {fb.h2Suggested && fb.h2Suggested.length > 0 && (
+                        <div className="pl-10 flex flex-wrap gap-1.5">
+                          <MessageCircle className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
+                          {fb.h2Suggested.map((item, idx) => (
+                            <span key={idx} className="inline-flex items-center text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
                       )}
                       {(fb.suggestions || fb.improvementSuggestion) && (
                         <div className="bg-blue-50/60 rounded-lg p-3 ml-10">
@@ -1316,7 +1772,7 @@ export default function DashboardPage() {
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Pekerjaan</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.occupation || '-'}</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.occupation || '-'}{s.occupation_other ? ` (${s.occupation_other})` : ''}</span>
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Jenis Pasien</span>
@@ -1325,6 +1781,18 @@ export default function DashboardPage() {
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Kunjungan</span>
                                             <span className="text-xs font-medium text-slate-700">{s.visit_count || '-'}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-[11px] text-slate-400 block">Sumber Rujukan</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.referral_source || '-'}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-[11px] text-slate-400 block">Pendapatan</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.income_range || '-'}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-[11px] text-slate-400 block">Kondisi Lainnya</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.condition_type_other || '-'}</span>
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Herbal</span>
@@ -1340,7 +1808,15 @@ export default function DashboardPage() {
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Sudah Rekomendasi</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.has_recommended || '-'}</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.has_recommended || '-'}{s.recommendation_count ? ` (${s.recommendation_count})` : ''}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-[11px] text-slate-400 block">WTP Harga</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.wtp_cost_today ? `Rp ${s.wtp_cost_today.toLocaleString('id-ID')}` : '-'}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-[11px] text-slate-400 block">WTP Max</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.wtp_max_acceptable || '-'}</span>
                                           </div>
                                         </div>
 
@@ -1391,6 +1867,61 @@ export default function DashboardPage() {
                                                 <p className="text-xs text-slate-700 mt-0.5 italic">&ldquo;{s.testimonial}&rdquo;</p>
                                               </div>
                                             )}
+                                          </div>
+                                        )}
+
+                                        {/* H1/H2 Liked & Suggested */}
+                                        {(s.h1_liked && s.h1_liked.length > 0) && (
+                                          <div className="border-t border-slate-200 pt-3">
+                                            <span className="text-[11px] text-teal-600 font-semibold block mb-1">H1 Disukai:</span>
+                                            <div className="flex flex-wrap gap-1">
+                                              {s.h1_liked.map((item, idx) => (
+                                                <span key={idx} className="text-[10px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-200">{item}</span>
+                                              ))}
+                                            </div>
+                                            {s.h1_liked_other && <p className="text-[10px] text-slate-500 mt-1">Lainnya: {s.h1_liked_other}</p>}
+                                          </div>
+                                        )}
+                                        {(s.h2_suggested && s.h2_suggested.length > 0) && (
+                                          <div className="border-t border-slate-200 pt-3">
+                                            <span className="text-[11px] text-amber-600 font-semibold block mb-1">H2 Disarankan:</span>
+                                            <div className="flex flex-wrap gap-1">
+                                              {s.h2_suggested.map((item, idx) => (
+                                                <span key={idx} className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">{item}</span>
+                                              ))}
+                                            </div>
+                                            {s.h2_suggested_other && <p className="text-[10px] text-slate-500 mt-1">Lainnya: {s.h2_suggested_other}</p>}
+                                          </div>
+                                        )}
+
+                                        {/* Clarity D1-D4 Scores */}
+                                        {(s.d1_clarity_role || s.d2_clarity_explanation || s.d3_clarity_comfortable || s.d4_clarity_specialist) && (
+                                          <div className="border-t border-slate-200 pt-3">
+                                            <span className="text-[11px] text-violet-600 font-semibold block mb-1">Clarity (D1-D4):</span>
+                                            <div className="flex flex-wrap gap-1">
+                                              {s.d1_clarity_role !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D1: {s.d1_clarity_role}</span>}
+                                              {s.d2_clarity_explanation !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D2: {s.d2_clarity_explanation}</span>}
+                                              {s.d3_clarity_comfortable !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D3: {s.d3_clarity_comfortable}</span>}
+                                              {s.d4_clarity_specialist !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D4: {s.d4_clarity_specialist}</span>}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Spiritual F1-F9 Scores */}
+                                        {(s.f1_adab_islami || s.f2_gender_concordance || s.f6_spiritual_activation) && (
+                                          <div className="border-t border-slate-200 pt-3">
+                                            <span className="text-[11px] text-blue-600 font-semibold block mb-1">Spiritual (F1-F9):</span>
+                                            <div className="flex flex-wrap gap-1">
+                                              {s.f1_adab_islami !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F1: {s.f1_adab_islami}</span>}
+                                              {s.f2_gender_concordance !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F2: {s.f2_gender_concordance}</span>}
+                                              {s.f3_prayer_accommodation !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F3: {s.f3_prayer_accommodation}</span>}
+                                              {s.f4_halal_assurance !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F4: {s.f4_halal_assurance}</span>}
+                                              {s.f5_tibb_nabawi !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F5: {s.f5_tibb_nabawi}</span>}
+                                              {s.f6_spiritual_activation !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F6: {s.f6_spiritual_activation}</span>}
+                                              {s.f7_holistic_peace !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F7: {s.f7_holistic_peace}</span>}
+                                              {s.f8_spiritual_communication !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F8: {s.f8_spiritual_communication}</span>}
+                                              {s.f9_reverse_coded !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F9*: {s.f9_reverse_coded}</span>}
+                                            </div>
                                           </div>
                                         )}
                                       </div>

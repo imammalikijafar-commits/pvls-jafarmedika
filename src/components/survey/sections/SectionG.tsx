@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { VISIT_PLANS, RECOMMENDATION_STATUS } from '@/lib/validators'
+import { VISIT_PLANS, RECOMMENDATION_STATUS, RECOMMENDATION_COUNTS } from '@/lib/validators'
 import type { FormData } from './types'
 
 interface SectionProps {
@@ -19,6 +19,13 @@ const getNPSLabel = (v: number) => {
   if (v <= 6) return { text: 'Detractor', color: 'text-red-500', bg: 'bg-red-50 border-red-200' }
   if (v <= 8) return { text: 'Passive', color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200' }
   return { text: 'Promoter', color: 'text-teal-500', bg: 'bg-teal-50 border-teal-200' }
+}
+
+/** WTP price-increase slider labels (0-10) */
+const getWTPLabel = (v: number) => {
+  if (v <= 3) return { text: 'Tidak Bersedia', color: 'text-red-500', bg: 'bg-red-50 border-red-200' }
+  if (v <= 6) return { text: 'Ragu-ragu', color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200' }
+  return { text: 'Bersedia', color: 'text-teal-500', bg: 'bg-teal-50 border-teal-200' }
 }
 
 export default function SectionG({ form, updateField }: SectionProps) {
@@ -38,7 +45,7 @@ export default function SectionG({ form, updateField }: SectionProps) {
         </div>
         <div>
           <h2 className="text-xl font-extrabold text-slate-900 font-[family-name:var(--font-display)] tracking-tight">
-            Bagian G — Loyaltas & Rekomendasi (NPS)
+            Bagian G — Loyaltas &amp; Rekomendasi (NPS)
           </h2>
           <p className="text-sm text-slate-500 mt-1 font-[family-name:var(--font-body)]">
             Seberapa besar kemungkinan Anda merekomendasikan layanan ini?
@@ -163,6 +170,97 @@ export default function SectionG({ form, updateField }: SectionProps) {
                 </div>
               ))}
             </RadioGroup>
+          </div>
+
+          {/* G4: Recommendation Count */}
+          <div className="space-y-3 pt-5 border-t border-slate-200">
+            <Label className="text-sm font-semibold text-slate-700 font-[family-name:var(--font-display)]">
+              <span className="text-teal-600 mr-1">G4.</span>
+              Berapa kali Anda sudah merekomendasikan RSU Ja&apos;far ke orang lain?
+            </Label>
+            <RadioGroup
+              value={form.recommendation_count}
+              onValueChange={(v) => updateField('recommendation_count', v)}
+              className="space-y-2"
+            >
+              {RECOMMENDATION_COUNTS.map((opt) => (
+                <div
+                  key={opt}
+                  className={cn(
+                    'flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer',
+                    form.recommendation_count === opt
+                      ? 'border-teal-500 bg-teal-50'
+                      : 'border-slate-200 hover:border-teal-300 hover:bg-teal-50/30'
+                  )}
+                  onClick={() => updateField('recommendation_count', opt)}
+                >
+                  <RadioGroupItem value={opt} id={`rcnt-${opt.slice(0, 10)}`} className="data-[state=checked]:bg-teal-500 data-[state=checked]:border-teal-500" />
+                  <Label htmlFor={`rcnt-${opt.slice(0, 10)}`} className="text-sm font-normal cursor-pointer font-[family-name:var(--font-body)]">{opt}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+
+          {/* G5: Willingness to Pay (Price Increase Tolerance) — 0-10 slider */}
+          <div className="space-y-4 pt-5 border-t border-slate-200">
+            <div className="text-center">
+              <Label className="text-base font-extrabold text-slate-900 font-[family-name:var(--font-display)]">
+                <span className="text-teal-600 mr-1">G5.</span>
+                Seberapa besar kemungkinan Anda akan datang lagi{' '}
+                <span className="text-amber-600">JIKA</span> biaya naik 50%?{' '}
+                <span className="text-teal-600 tabular-nums">{form.wtp_price_increase}</span>
+              </Label>
+            </div>
+
+            <div className="flex justify-between items-center text-xs text-slate-400 mb-1 px-1 font-[family-name:var(--font-body)]">
+              <span>Sangat tidak mungkin</span>
+              <span>Sangat pasti</span>
+            </div>
+
+            {/* Range slider */}
+            <div className="relative">
+              <input
+                type="range"
+                min={0} max={10}
+                value={form.wtp_price_increase}
+                onChange={(e) => updateField('wtp_price_increase', parseInt(e.target.value))}
+                className="w-full h-3 rounded-full appearance-none cursor-pointer accent-teal-600"
+              />
+              {/* Color zones background */}
+              <div className="absolute top-full left-0 right-0 h-1 mt-0.5 rounded-full overflow-hidden flex">
+                <div className="flex-[4] bg-red-100" />
+                <div className="flex-[3] bg-amber-100" />
+                <div className="flex-[4] bg-teal-100" />
+              </div>
+            </div>
+
+            {/* Number circles */}
+            <div className="flex justify-between px-0.5">
+              {Array.from({ length: 11 }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => updateField('wtp_price_increase', i)}
+                  className={cn(
+                    'w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold tabular-nums cursor-pointer transition-all',
+                    getWTPLabel(i).bg,
+                    'border',
+                    form.wtp_price_increase === i && 'scale-110 shadow-md ring-2 ring-teal-400/50'
+                  )}
+                >
+                  {i}
+                </button>
+              ))}
+            </div>
+
+            {/* Slider labels */}
+            <div className="flex justify-between px-0.5 text-[11px] font-medium pt-1">
+              <span className="text-red-500 font-[family-name:var(--font-body)]">0-3: Tidak Bersedia</span>
+              <span className="text-amber-500 font-[family-name:var(--font-body)]">4-6: Ragu-ragu</span>
+              <span className="text-teal-500 font-[family-name:var(--font-body)]">7-10: Bersedia</span>
+            </div>
+            <p className="text-center text-xs text-slate-400 font-[family-name:var(--font-body)]">
+              0 = Sangat tidak mungkin, 10 = Sangat pasti
+            </p>
           </div>
         </div>
       </div>

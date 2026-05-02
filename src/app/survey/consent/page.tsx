@@ -111,7 +111,7 @@ export default function ConsentPage() {
               <div>
                 <h3 className="font-bold text-slate-800 mb-2 font-[family-name:var(--font-display)]">1. Judul Penelitian</h3>
                 <p className="text-slate-600">
-                  Pengembangan Digital Patient Experience Monitoring System (DPEMS) untuk Evaluasi Kualitas Layanan Integratif (Akupuntur dan Herbal) pada Pasien Stroke dan Nyeri Kronis di RSU Ja&apos;far Medika Karanganyar.
+                  Pengembangan Digital Patient Experience Monitoring System (DPEMS) untuk Evaluasi Kualitas Layanan Integratif (Akupuntur dan Herbal) di RSU Ja&apos;far Medika Karanganyar.
                 </p>
               </div>
 
@@ -119,8 +119,8 @@ export default function ConsentPage() {
               <div>
                 <h3 className="font-bold text-slate-800 mb-2 font-[family-name:var(--font-display)]">2. Peneliti</h3>
                 <p>
-                  <strong>Peneliti Utama:</strong> Imam Maliki Ja&apos;far<br />
-                  <strong>Institusi:</strong> Program Studi Magister Administrasi Rumah Sakit (MARS) Universitas Muhammadiyah Surakarta (UMS)<br />
+                  <strong>Peneliti Utama:</strong> Imam Maliki<br />
+                  <strong>Institusi:</strong> Program Studi Magister<br />
                   <strong>Tempat Penelitian:</strong> Poli Akupuntur &amp; Herbal, RSU Ja&apos;far Medika, Mojogedang, Karanganyar, Jawa Tengah
                 </p>
               </div>
@@ -129,7 +129,7 @@ export default function ConsentPage() {
               <div>
                 <h3 className="font-bold text-slate-800 mb-2 font-[family-name:var(--font-display)]">3. Tujuan Penelitian</h3>
                 <p>
-                  Penelitian ini bertujuan mengembangkan dan menguji sistem digital untuk mengukur pengalaman pasien terhadap layanan kedokteran integratif (akupuntur dan herbal) secara komprehensif. Sistem ini mencakup penilaian kualitas layanan (SERVQUAL), pemantauan tingkat nyeri (VAS), indeks perawatan spiritual, serta loyalitas pasien (NPS). Hasil penelitian diharapkan dapat membantu rumah sakit dalam meningkatkan mutu pelayanan secara berbasis bukti.
+                  Penelitian ini bertujuan mengembangkan dan menguji sistem digital untuk mengukur pengalaman pasien terhadap layanan kedokteran integratif (akupunktur dan herbal) secara komprehensif. Sistem ini mencakup penilaian kualitas layanan (SERVQUAL), pemantauan outcome klinis secara kondisional berdasarkan keluhan pasien — Visual Analogue Scale (VAS) untuk nyeri kronis, Barthel Index untuk stroke/pasca stroke, Insomnia Severity Index (ISI) untuk gangguan tidur, dan WHOQOL-BREF untuk wellness — indeks perawatan spiritual islami, loyalitas pasien (NPS), serta feedback terstruktur multi-kategori. Hasil penelitian diharapkan dapat membantu rumah sakit dalam meningkatkan mutu pelayanan secara berbasis bukti.
                 </p>
               </div>
 
@@ -141,7 +141,7 @@ export default function ConsentPage() {
                 </p>
                 <ul className="list-disc list-inside space-y-1.5 text-slate-600 pl-1">
                   <li>Mengisi kuesioner elektronik yang terdiri dari 8 bagian (A-H)</li>
-                  <li>Kuesioner mencakup data demografi, penilaian layanan, penilaian herbal, persepsi terapi, penilaian kondisi, dimensi spiritual, loyalitas, dan masukan/saran</li>
+                  <li>Kuesioner mencakup data demografi, penilaian kualitas layanan (SERVQUAL), penilaian layanan herbal, edukasi terapi adjuvan, penilaian outcome klinis kondisional (VAS/Barthel/ISI/WHOQOL), dimensi spiritual islami, loyalitas pasien (NPS), dan masukan/saran terstruktur multi-kategori</li>
                   <li>Waktu pengisian perkiraan 5-10 menit</li>
                   <li>Anda dapat mengisi kuesioner ini setelah menjalani terapi akupuntur di poli</li>
                 </ul>
@@ -197,8 +197,8 @@ export default function ConsentPage() {
                   Jika Anda memiliki pertanyaan atau memerlukan informasi lebih lanjut terkait penelitian ini, Anda dapat menghubungi:
                 </p>
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
-                  <p><strong className="text-slate-700">Peneliti:</strong> Imam Maliki Ja&apos;far</p>
-                  <p><strong className="text-slate-700">Institusi:</strong> Program Studi Magister Administrasi Rumah Sakit (MARS) Universitas Muhammadiyah Surakarta (UMS)</p>
+                  <p><strong className="text-slate-700">Peneliti:</strong> Imam Maliki</p>
+                  <p><strong className="text-slate-700">Institusi:</strong> Program Studi Magister</p>
                   <p><strong className="text-slate-700">Tempat:</strong> Poli Akupuntur &amp; Herbal, RSU Ja&apos;far Medika</p>
                 </div>
               </div>

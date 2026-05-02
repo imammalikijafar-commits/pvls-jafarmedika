@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Loader2, Shield, BarChart3, Users, Heart, Lock, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Shield, BarChart3, Users, Heart, Lock, ArrowLeft, Stethoscope, ClipboardCheck, BadgeDollarSign, Leaf, Brain, Sparkles } from 'lucide-react'
 
 /* ════════════════════════════════════════════════════════════════════
    DESIGN TOKENS (matching landing page + dashboard)
@@ -147,33 +147,38 @@ export default function LoginPageClient() {
           >
             <div>
               <h2 className="font-[family-name:var(--font-display)] text-3xl xl:text-4xl font-extrabold text-white leading-tight tracking-tight">
-                Monitor Mutu <br />
-                <span style={{ color: TEAL.bright }}>Layanan Pasien</span>
+                Digital Patient <br />
+                <span style={{ color: TEAL.bright }}>Experience System</span>
               </h2>
               <p className="text-slate-400 text-sm mt-3 leading-relaxed max-w-sm">
-                Platform analitik berbasis SERVQUAL untuk pengukuran kepuasan pasien layanan integratif — akupuntur, herbal, dan rehabilitasi stroke.
+                Platform monitoring pengalaman pasien integratif dengan kuesioner 9 bagian (A–I) — data responden, SERVQUAL, layanan herbal, persepsi terapi, outcome klinis kondisional (VAS, Barthel, ISI, WHOQOL-BREF), spiritual &amp; holistik, NPS &amp; loyaltas, feedback multi-kategori, dan kesediaan bayar.
               </p>
             </div>
 
             {/* Feature pills — glassmorphism */}
             <div className="flex flex-wrap gap-3">
               {[
-                { icon: BarChart3, label: 'Analitik Real-time' },
                 { icon: Shield, label: 'SERVQUAL 5D' },
-                { icon: Heart, label: 'Spiritual Wellness' },
-                { icon: Users, label: 'NPS Tracking' },
+                { icon: Stethoscope, label: 'Outcome Klinis' },
+                { icon: Sparkles, label: 'Spiritual 9D' },
+                { icon: Users, label: 'NPS & Loyaltas' },
+                { icon: ClipboardCheck, label: 'Feedback Multi-Kategori' },
+                { icon: BadgeDollarSign, label: 'Willingness to Pay' },
+                { icon: Leaf, label: 'Layanan Herbal' },
+                { icon: Brain, label: 'Persepsi Terapi' },
+                { icon: BarChart3, label: 'Analitik Real-time' },
               ].map((item, i) => (
                 <motion.div
                   key={item.label}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 + i * 0.1, ease: EASE_OUT }}
-                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-white/[0.1] backdrop-blur-md bg-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.12)] hover:bg-white/[0.09] hover:border-white/[0.14] transition-all cursor-default"
+                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-white/[0.1] backdrop-blur-md bg-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.12)] hover:bg-white/[0.09] hover:border-white/[0.14] transition-all cursor-default"
                 >
                   <div className="w-6 h-6 rounded-md flex items-center justify-center bg-white/[0.08]">
                     <item.icon className="w-3 h-3" style={{ color: TEAL.bright }} strokeWidth={2.2} />
                   </div>
-                  <span className="text-slate-200 text-xs font-medium">{item.label}</span>
+                  <span className="text-slate-200 text-[11px] font-medium">{item.label}</span>
                 </motion.div>
               ))}
             </div>

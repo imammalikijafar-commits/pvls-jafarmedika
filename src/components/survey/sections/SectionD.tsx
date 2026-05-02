@@ -1,13 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { BookOpen } from 'lucide-react'
 import LikertScale from '@/components/survey/LikertScale'
-import { adjuvantQuestions } from './types'
+import { clarityQuestions } from './types'
 import type { FormData } from './types'
-import { cn } from '@/lib/utils'
 
 interface SectionProps {
   form: FormData
@@ -33,10 +30,10 @@ export default function SectionD({ form, updateField }: SectionProps) {
         </div>
         <div>
           <h2 className="text-xl font-extrabold text-slate-900 font-[family-name:var(--font-display)] tracking-tight">
-            Bagian D — Pemahaman Terapi Adjuvan
+            Bagian D — Persepsi Keterangan Terapi
           </h2>
           <p className="text-sm text-slate-500 mt-1 font-[family-name:var(--font-body)]">
-            Terapi adjuvan = akupuntur/herbal MENDUKUNG pengobatan dokter spesialis
+            Perceived Clarity of Therapeutic Role
           </p>
         </div>
       </div>
@@ -45,48 +42,17 @@ export default function SectionD({ form, updateField }: SectionProps) {
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-teal-600 via-teal-400 to-teal-600" />
         <div className="p-5 sm:p-6 space-y-6">
-          {/* D1 */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold text-slate-700 font-[family-name:var(--font-display)]">
-              <span className="text-teal-600 mr-1">D1.</span>
-              Menurut pemahaman Anda, peran akupuntur/herbal dalam pengobatan Anda adalah:
-            </Label>
-            <RadioGroup
-              value={form.adjuvant_role}
-              onValueChange={(v) => updateField('adjuvant_role', v)}
-              className="space-y-2"
-            >
-              {[
-                'Pengganti obat dokter spesialis (saya berhenti minum obat)',
-                'Pendukung/pelengkap (tetap minum obat + tambah akupuntur/herbal)',
-                'Pilihan terakhir (setelah obat konvensional tidak berhasil)',
-                'Belum tahu/tidak yakin',
-              ].map((opt) => (
-                <div
-                  key={opt}
-                  className={cn(
-                    'flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer',
-                    form.adjuvant_role === opt
-                      ? 'border-teal-500 bg-teal-50'
-                      : 'border-slate-200 hover:border-teal-300 hover:bg-teal-50/30'
-                  )}
-                  onClick={() => updateField('adjuvant_role', opt)}
-                >
-                  <RadioGroupItem value={opt} id={`adj-${opt.slice(0, 10)}`} className="mt-0.5 data-[state=checked]:bg-teal-500 data-[state=checked]:border-teal-500" />
-                  <Label htmlFor={`adj-${opt.slice(0, 10)}`} className="text-sm font-normal leading-relaxed cursor-pointer font-[family-name:var(--font-body)]">{opt}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          {/* D2 */}
-          <div className="space-y-5 pt-5 border-t border-slate-200">
+          {/* D1–D4: Clarity Likert Items */}
+          <div className="space-y-5">
             <p className="text-sm font-semibold text-teal-700 font-[family-name:var(--font-display)]">
-              D2. Kualitas informasi yang saya terima tentang terapi ini:
+              Skala: 1 = Sangat Tidak Setuju, 5 = Sangat Setuju
             </p>
-            {adjuvantQuestions.map((q, i) => (
+            {clarityQuestions.map((q, i) => (
               <div key={i} className="space-y-2.5">
-                <p className="text-sm font-medium text-slate-600 leading-relaxed font-[family-name:var(--font-body)]">{q.text}</p>
+                <p className="text-sm font-medium text-slate-600 leading-relaxed font-[family-name:var(--font-body)]">
+                  <span className="text-teal-600 font-semibold mr-1">D{i + 1}.</span>
+                  {q.text}
+                </p>
                 <LikertScale
                   value={form[q.key] as number | null}
                   onChange={(v) => updateField(q.key, v)}

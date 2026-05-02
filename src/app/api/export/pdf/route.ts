@@ -109,11 +109,12 @@ export async function GET(request: NextRequest) {
     })
 
     // Spiritual averages
-    const spiritSaldoa = avg(workingData.map((s) => s.spiritual_salam_doa))
-    const spiritIslam = avg(workingData.map((s) => s.spiritual_islam_respect))
-    const spiritFacility = avg(workingData.map((s) => s.spiritual_facility))
-    const spiritHealing = avg(workingData.map((s) => s.spiritual_healing))
-    const spiritSupport = avg(workingData.map((s) => s.spiritual_support))
+    // Spiritual F1-F5 (v2.0 new columns)
+    const spiritF1 = avg(workingData.map(s => s.f1_adab_islami))
+    const spiritF2 = avg(workingData.map(s => s.f2_gender_concordance))
+    const spiritF3 = avg(workingData.map(s => s.f3_prayer_accommodation))
+    const spiritF4 = avg(workingData.map(s => s.f4_halal_assurance))
+    const spiritF5 = avg(workingData.map(s => s.f5_tibb_nabawi))
 
     // Feedback
     const topExperiences = workingData.filter((s) => s.best_experience).slice(0, 5).map((s) => s.best_experience!)
@@ -128,11 +129,7 @@ export async function GET(request: NextRequest) {
     const herbAfford = avg(workingData.map((s) => s.herb_affordability))
     const herbPharm = avg(workingData.map((s) => s.herb_pharmacist))
 
-    // Adjuvant averages
-    const adjSupport = avg(workingData.map((s) => s.info_acupuncture_support))
-    const adjUnderstanding = avg(workingData.map((s) => s.info_understanding))
-    const adjSufficient = avg(workingData.map((s) => s.info_sufficient))
-    const adjComfortable = avg(workingData.map((s) => s.info_comfortable_asking))
+    // Clarity averages (Bagian D)
 
     // Date range for report
     const firstDate = workingData.length > 0
@@ -516,17 +513,25 @@ export async function GET(request: NextRequest) {
     }
 
     y += 10
-    y = sectionTitle(doc, 'Bagian D: Persepsi Terapi Adjuvan', y)
+    y = sectionTitle(doc, 'Bagian D: Clarity of Therapeutic Role (D1-D4)', y)
     y += 2
+
+    // Clarity averages
+    const clarityRole = avg(workingData.map(s => s.d1_clarity_role))
+    const clarityExpl = avg(workingData.map(s => s.d2_clarity_explanation))
+    const clarityComf = avg(workingData.map(s => s.d3_clarity_comfortable))
+    const claritySpec = avg(workingData.map(s => s.d4_clarity_specialist))
+    const clarityOverall = parseFloat(((clarityRole + clarityExpl + clarityComf + claritySpec) / 4).toFixed(2))
 
     autoTable(doc, {
       startY: y,
       head: [['Aspek', 'Rata-rata', 'Kepuasan (%)']],
       body: [
-        ['Dukungan Akupuntur', `${adjSupport.toFixed(2)}`, `${((adjSupport / 5) * 100).toFixed(0)}%`],
-        ['Pemahaman Informasi', `${adjUnderstanding.toFixed(2)}`, `${((adjUnderstanding / 5) * 100).toFixed(0)}%`],
-        ['Kecukupan Informasi', `${adjSufficient.toFixed(2)}`, `${((adjSufficient / 5) * 100).toFixed(0)}%`],
-        ['Kenyamanan Bertanya', `${adjComfortable.toFixed(2)}`, `${((adjComfortable / 5) * 100).toFixed(0)}%`],
+        ['D1 Klaritas Role Terapis', `${clarityRole.toFixed(2)}`, `${((clarityRole / 5) * 100).toFixed(0)}%`],
+        ['D2 Klaritas Penjelasan', `${clarityExpl.toFixed(2)}`, `${((clarityExpl / 5) * 100).toFixed(0)}%`],
+        ['D3 Kenyamanan', `${clarityComf.toFixed(2)}`, `${((clarityComf / 5) * 100).toFixed(0)}%`],
+        ['D4 Spesialis Terpercaya', `${claritySpec.toFixed(2)}`, `${((claritySpec / 5) * 100).toFixed(0)}%`],
+        ['OVERALL', `${clarityOverall.toFixed(2)}`, `${((clarityOverall / 5) * 100).toFixed(0)}%`],
       ],
       theme: 'grid',
       headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
@@ -534,10 +539,12 @@ export async function GET(request: NextRequest) {
       margin: { left: margin, right: margin },
     })
 
+    y = afterTable(doc, y + 30) + 10
+
     // --- PAGE 6: CLINICAL OUTCOMES ---
     doc.addPage()
     y = margin
-    y = sectionTitle(doc, 'Bagian E: Outcomes Klinis (VAS)', y)
+    y = sectionTitle(doc, 'Bagian E1: Outcomes Klinis (VAS)', y)
     y += 2
 
     autoTable(doc, {
@@ -575,10 +582,287 @@ export async function GET(request: NextRequest) {
       margin: { left: margin, right: margin },
     })
 
-    // --- PAGE 7: SPIRITUAL WELLNESS ---
+    // --- PAGE: BARTHEL INDEX (E2) ---
     doc.addPage()
     y = margin
-    y = sectionTitle(doc, 'Bagian F: Spiritual & Holistic Wellness', y)
+    y = sectionTitle(doc, 'Bagian E2: Barthel Index (Stroke)', y)
+    y += 2
+
+    const strokePatients = workingData.filter(s => {
+      const ct = s.condition_type
+      return ct && (ct.includes('Stroke') || ct.includes('Pasca Stroke'))
+    })
+
+    const barthelPairs = [
+      ['barthel_eat_first', 'barthel_eat_current'],
+      ['barthel_bath_first', 'barthel_bath_current'],
+      ['barthel_groom_first', 'barthel_groom_current'],
+      ['barthel_dress_first', 'barthel_dress_current'],
+      ['barthel_toilet_first', 'barthel_toilet_current'],
+      ['barthel_bowel_first', 'barthel_bowel_current'],
+      ['barthel_bladder_first', 'barthel_bladder_current'],
+      ['barthel_transfer_first', 'barthel_transfer_current'],
+      ['barthel_mobility_first', 'barthel_mobility_current'],
+      ['barthel_stairs_first', 'barthel_stairs_current'],
+    ]
+
+    function classifyBarthel(score: number): string {
+      if (score <= 20) return 'Total Dependen'
+      if (score <= 60) return 'Dependen Berat'
+      if (score <= 90) return 'Dependen Sedang'
+      if (score <= 99) return 'Dependen Ringan'
+      return 'Mandiri'
+    }
+
+    if (strokePatients.length > 0) {
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100)
+      doc.text(`Total pasien stroke: ${strokePatients.length}`, margin, y)
+      y += 8
+
+      // Compute per-item averages
+      const barthelItemRows: string[][] = []
+      const itemLabels = ['Makan', 'Mandi', 'Perawatan Diri', 'Berpakaian', 'Toilet', 'Kont. Usus', 'Kont. Kandung Kemih', 'Transfer', 'Mobilitas', 'Tangga']
+      barthelPairs.forEach(([fKey, cKey], idx) => {
+        const firstScores = strokePatients.map(s => (s as any)[fKey] as number).filter((v): v is number => v !== null && v !== undefined)
+        const currentScores = strokePatients.map(s => (s as any)[cKey] as number).filter((v): v is number => v !== null && v !== undefined)
+        const avgFirst = firstScores.length > 0 ? avg(firstScores) : 0
+        const avgCurrent = currentScores.length > 0 ? avg(currentScores) : 0
+        barthelItemRows.push([itemLabels[idx], `${avgFirst.toFixed(1)}`, `${avgCurrent.toFixed(1)}`, avgCurrent > avgFirst ? '+' + (avgCurrent - avgFirst).toFixed(1) : (avgCurrent - avgFirst).toFixed(1)])
+      })
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Aktivitas', 'Rata-rata Awal', 'Rata-rata Sekarang', 'Perubahan']],
+        body: barthelItemRows,
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 60) + 10
+
+      // Summary scores
+      const barthelScores = strokePatients.map(s => {
+        let first = 0, current = 0
+        for (const [fKey, cKey] of barthelPairs) {
+          first += ((s as any)[fKey] as number) || 0
+          current += ((s as any)[cKey] as number) || 0
+        }
+        return { first, current }
+      })
+
+      const avgFirstBarthel = avg(barthelScores.map(b => b.first))
+      const avgCurrentBarthel = avg(barthelScores.map(b => b.current))
+      const avgImprovement = avgCurrentBarthel - avgFirstBarthel
+      const depFirst = classifyBarthel(avgFirstBarthel)
+      const depCurrent = classifyBarthel(avgCurrentBarthel)
+
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('Ringkasan Barthel Index', margin, y)
+      y += 6
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Indikator', 'Nilai']],
+        body: [
+          ['Rata-rata Skor Awal', `${avgFirstBarthel.toFixed(1)} (${depFirst})`],
+          ['Rata-rata Skor Sekarang', `${avgCurrentBarthel.toFixed(1)} (${depCurrent})`],
+          ['Rata-rata Peningkatan', `${avgImprovement > 0 ? '+' : ''}${avgImprovement.toFixed(1)}`],
+          ['Klasifikasi Ketergantungan Awal', depFirst],
+          ['Klasifikasi Ketergantungan Sekarang', depCurrent],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+    } else {
+      doc.setFontSize(10)
+      doc.setTextColor(150)
+      doc.text('Tidak ada data pasien stroke untuk periode ini.', margin, y)
+    }
+
+    // --- PAGE: ISI (E3) ---
+    doc.addPage()
+    y = margin
+    y = sectionTitle(doc, 'Bagian E3: Insomnia Severity Index (ISI)', y)
+    y += 2
+
+    const isiPatients = workingData.filter(s => {
+      const ct = s.condition_type
+      return ct && (ct.includes('Insomnia') || ct.includes('Gangguan Tidur'))
+    })
+
+    if (isiPatients.length > 0) {
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100)
+      doc.text(`Total pasien insomnia: ${isiPatients.length}`, margin, y)
+      y += 8
+
+      // Compute ISI scores from individual items
+      const isiItemKeys = [
+        { key: 'isi_1', label: 'Kesulitan Tidur' },
+        { key: 'isi_2', label: 'Tetap Tidur' },
+        { key: 'isi_3', label: 'Bangun Terlalu Awal' },
+        { key: 'isi_4', label: 'Puas dengan Pola Tidur' },
+        { key: 'isi_5', label: 'Gangguan Terlihat Orang Lain' },
+        { key: 'isi_6', label: 'Cemas tentang Tidur' },
+        { key: 'isi_7', label: 'Gangguan Fungsi Siang Hari' },
+      ]
+
+      const isiItemRows: string[][] = []
+      isiItemKeys.forEach(item => {
+        const scores = isiPatients.map(s => (s as any)[item.key] as number).filter((v): v is number => v !== null && v !== undefined)
+        const itemAvg = scores.length > 0 ? avg(scores) : 0
+        isiItemRows.push([item.label, `${itemAvg.toFixed(2)}`, `${scores.length}`])
+      })
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Dimensi ISI', 'Rata-rata', 'Responden']],
+        body: isiItemRows,
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 50) + 10
+
+      // Total ISI scores
+      const isiTotalScores = isiPatients.map(s => {
+        let total = 0
+        isiItemKeys.forEach(item => {
+          total += ((s as any)[item.key] as number) || 0
+        })
+        return total
+      }).filter(t => t > 0)
+
+      const avgIsiTotal = isiTotalScores.length > 0 ? avg(isiTotalScores) : 0
+      const isiBeforeScores = isiPatients.map(s => (s as any).isi_total_before as number).filter((v): v is number => v !== null && v !== undefined)
+      const isiAfterScores = isiPatients.map(s => (s as any).isi_total_after as number).filter((v): v is number => v !== null && v !== undefined)
+      const avgIsiBefore = isiBeforeScores.length > 0 ? avg(isiBeforeScores) : 0
+      const avgIsiAfter = isiAfterScores.length > 0 ? avg(isiAfterScores) : 0
+
+      function classifyIsi(score: number): string {
+        if (score <= 7) return 'Subklinis'
+        if (score <= 14) return 'Ringan'
+        if (score <= 21) return 'Sedang'
+        return 'Berat'
+      }
+
+      // Distribution of severity
+      const isiSeverityMap: Record<string, number> = {}
+      isiTotalScores.forEach(score => {
+        const severity = classifyIsi(score)
+        isiSeverityMap[severity] = (isiSeverityMap[severity] || 0) + 1
+      })
+
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('Ringkasan ISI', margin, y)
+      y += 6
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Indikator', 'Nilai']],
+        body: [
+          ['Rata-rata Total ISI', `${avgIsiTotal.toFixed(1)} / 28 (${classifyIsi(avgIsiTotal)})`],
+          ['Rata-rata ISI Sebelum', avgIsiBefore > 0 ? `${avgIsiBefore.toFixed(1)} (${classifyIsi(avgIsiBefore)})` : 'N/A'],
+          ['Rata-rata ISI Sesudah', avgIsiAfter > 0 ? `${avgIsiAfter.toFixed(1)} (${classifyIsi(avgIsiAfter)})` : 'N/A'],
+          ['Peningkatan', avgIsiBefore > 0 && avgIsiAfter > 0 ? `${(avgIsiBefore - avgIsiAfter) > 0 ? '' : '+'}${(avgIsiAfter - avgIsiBefore).toFixed(1)}` : 'N/A'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 40) + 10
+
+      // Severity distribution
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('Distribusi Keparahan Insomnia', margin, y)
+      y += 6
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Tingkat Keparahan', 'Skor', 'Jumlah', 'Persentase']],
+        body: [
+          ['Subklinis', '0-7', `${isiSeverityMap['Subklinis'] || 0}`, isiTotalScores.length > 0 ? `${(((isiSeverityMap['Subklinis'] || 0) / isiTotalScores.length) * 100).toFixed(1)}%` : '0%'],
+          ['Ringan', '8-14', `${isiSeverityMap['Ringan'] || 0}`, isiTotalScores.length > 0 ? `${(((isiSeverityMap['Ringan'] || 0) / isiTotalScores.length) * 100).toFixed(1)}%` : '0%'],
+          ['Sedang', '15-21', `${isiSeverityMap['Sedang'] || 0}`, isiTotalScores.length > 0 ? `${(((isiSeverityMap['Sedang'] || 0) / isiTotalScores.length) * 100).toFixed(1)}%` : '0%'],
+          ['Berat', '22-28', `${isiSeverityMap['Berat'] || 0}`, isiTotalScores.length > 0 ? `${(((isiSeverityMap['Berat'] || 0) / isiTotalScores.length) * 100).toFixed(1)}%` : '0%'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+    } else {
+      doc.setFontSize(10)
+      doc.setTextColor(150)
+      doc.text('Tidak ada data pasien insomnia untuk periode ini.', margin, y)
+    }
+
+    // --- PAGE: WHOQOL-BREF WELLNESS (E4) ---
+    doc.addPage()
+    y = margin
+    y = sectionTitle(doc, 'Bagian E4: WHOQOL-BREF Wellness', y)
+    y += 2
+
+    const wellnessPatients = workingData.filter(s => {
+      const ct = s.condition_type
+      return ct && (ct.includes('Pemeliharaan') || ct.includes('Wellness'))
+    })
+
+    if (wellnessPatients.length > 0) {
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100)
+      doc.text(`Total pasien wellness: ${wellnessPatients.length}`, margin, y)
+      y += 8
+
+      const wellnessAvg1 = avg(wellnessPatients.map(s => (s as any).wellness_1 as number).filter((v): v is number => v !== null && v !== undefined))
+      const wellnessAvg2 = avg(wellnessPatients.map(s => (s as any).wellness_2 as number).filter((v): v is number => v !== null && v !== undefined))
+      const wellnessAvg3 = avg(wellnessPatients.map(s => (s as any).wellness_3 as number).filter((v): v is number => v !== null && v !== undefined))
+      const wellnessOverall = [wellnessAvg1, wellnessAvg2, wellnessAvg3].filter(v => v > 0).length > 0
+        ? avg([wellnessAvg1, wellnessAvg2, wellnessAvg3])
+        : 0
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Dimensi Wellness', 'Rata-rata', 'Kategori']],
+        body: [
+          ['Fisik (Q1)', `${wellnessAvg1.toFixed(2)}`, wellnessAvg1 >= 4 ? 'Baik' : wellnessAvg1 >= 3 ? 'Cukup' : 'Perlu Perhatian'],
+          ['Psikologis (Q2)', `${wellnessAvg2.toFixed(2)}`, wellnessAvg2 >= 4 ? 'Baik' : wellnessAvg2 >= 3 ? 'Cukup' : 'Perlu Perhatian'],
+          ['Sosial (Q3)', `${wellnessAvg3.toFixed(2)}`, wellnessAvg3 >= 4 ? 'Baik' : wellnessAvg3 >= 3 ? 'Cukup' : 'Perlu Perhatian'],
+          ['Overall', `${wellnessOverall.toFixed(2)}`, wellnessOverall >= 4 ? 'Baik' : wellnessOverall >= 3 ? 'Cukup' : 'Perlu Perhatian'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+    } else {
+      doc.setFontSize(10)
+      doc.setTextColor(150)
+      doc.text('Tidak ada data pasien wellness untuk periode ini.', margin, y)
+    }
+
+    // --- PAGE 7: SPIRITUAL WELLNESS (9 DIMENSIONS) ---
+    doc.addPage()
+    y = margin
+    y = sectionTitle(doc, 'Bagian F: Spiritual & Holistic Wellness (9 Dimensi)', y)
     y += 2
 
     doc.setFontSize(10)
@@ -587,21 +871,44 @@ export async function GET(request: NextRequest) {
     doc.text('Skor rata-rata dimensi spiritual (skala 1-5)', margin, y)
     y += 8
 
+    // Compute all 9 spiritual dimensions
+    const spiritF6 = avg(workingData.map(s => s.f6_spiritual_activation).filter((v): v is number => v !== null && v !== undefined))
+    const spiritF7 = avg(workingData.map(s => s.f7_holistic_peace).filter((v): v is number => v !== null && v !== undefined))
+    const spiritF8 = avg(workingData.map(s => s.f8_spiritual_communication).filter((v): v is number => v !== null && v !== undefined))
+    const spiritF9Raw = avg(workingData.map(s => s.f9_reverse_coded).filter((v): v is number => v !== null && v !== undefined))
+    // F9 reverse scoring: per-respondent reverse (6 - raw), then average
+    const spiritF9 = avg(workingData.map(s => {
+      const raw = s.f9_reverse_coded
+      return raw !== null && raw !== undefined ? 6 - raw : null
+    }))
+
     autoTable(doc, {
       startY: y,
-      head: [['Dimensi Spiritual', 'Rata-rata', 'Kepuasan (%)']],
+      head: [['No', 'Dimensi Spiritual', 'Rata-rata', 'Kepuasan (%)']],
       body: [
-        ['Salam & Doa Terapis', `${spiritSaldoa.toFixed(2)}`, `${((spiritSaldoa / 5) * 100).toFixed(0)}%`],
-        ['Respek terhadap Islam', `${spiritIslam.toFixed(2)}`, `${((spiritIslam / 5) * 100).toFixed(0)}%`],
-        ['Fasilitas Ibadah', `${spiritFacility.toFixed(2)}`, `${((spiritFacility / 5) * 100).toFixed(0)}%`],
-        ['Rasa Penyembuhan Spiritual', `${spiritHealing.toFixed(2)}`, `${((spiritHealing / 5) * 100).toFixed(0)}%`],
-        ['Dukungan Spiritual', `${spiritSupport.toFixed(2)}`, `${((spiritSupport / 5) * 100).toFixed(0)}%`],
+        ['F1', 'Adab & Etika Islami', `${spiritF1.toFixed(2)}`, `${((spiritF1 / 5) * 100).toFixed(0)}%`],
+        ['F2', 'Gender Concordance', `${spiritF2.toFixed(2)}`, `${((spiritF2 / 5) * 100).toFixed(0)}%`],
+        ['F3', 'Waktu Shalat', `${spiritF3.toFixed(2)}`, `${((spiritF3 / 5) * 100).toFixed(0)}%`],
+        ['F4', 'Jaminan Halal & Thayyib', `${spiritF4.toFixed(2)}`, `${((spiritF4 / 5) * 100).toFixed(0)}%`],
+        ['F5', 'Tibb Nabawi', `${spiritF5.toFixed(2)}`, `${((spiritF5 / 5) * 100).toFixed(0)}%`],
+        ['F6', 'Aktivasi Spiritual', `${spiritF6.toFixed(2)}`, `${((spiritF6 / 5) * 100).toFixed(0)}%`],
+        ['F7', 'Ketenangan Holistik', `${spiritF7.toFixed(2)}`, `${((spiritF7 / 5) * 100).toFixed(0)}%`],
+        ['F8', 'Komunikasi Spiritual', `${spiritF8.toFixed(2)}`, `${((spiritF8 / 5) * 100).toFixed(0)}%`],
+        ['F9*', `Reverse-Coded (Raw: ${spiritF9Raw.toFixed(1)} | Reversed: ${spiritF9.toFixed(2)})`, `${spiritF9.toFixed(2)}`, `${((spiritF9 / 5) * 100).toFixed(0)}%`],
+        ['', 'OVERALL (9 Dimensi, F9 Reversed)', `${((spiritF1 + spiritF2 + spiritF3 + spiritF4 + spiritF5 + spiritF6 + spiritF7 + spiritF8 + spiritF9) / 9).toFixed(2)}`, `${(((spiritF1 + spiritF2 + spiritF3 + spiritF4 + spiritF5 + spiritF6 + spiritF7 + spiritF8 + spiritF9) / 9 / 5) * 100).toFixed(0)}%`],
       ],
       theme: 'grid',
       headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: LIGHT_GRAY },
       margin: { left: margin, right: margin },
     })
+
+    // Footnote for F9
+    y = afterTable(doc, y + 50) + 6
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'italic')
+    doc.setTextColor(120)
+    doc.text('*F9 Reverse-Coded: Skor dibalik sebelum dihitung (1 menjadi 5, 5 menjadi 1). Item ini mengukur apakah aspek keagamaan terlalu sering disebutkan.', margin, y)
 
     // --- PAGE 8: NPS & LOYALTY ---
     doc.addPage()
@@ -668,6 +975,67 @@ export async function GET(request: NextRequest) {
       alternateRowStyles: { fillColor: LIGHT_GRAY },
       margin: { left: margin, right: margin },
     })
+
+    y = afterTable(doc, y + 30) + 10
+
+    // G4: Recommendation Count
+    const recCountMap: Record<string, number> = {}
+    workingData.forEach(s => {
+      if (s.recommendation_count) recCountMap[s.recommendation_count] = (recCountMap[s.recommendation_count] || 0) + 1
+    })
+
+    if (Object.keys(recCountMap).length > 0) {
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('Jumlah Orang Direkomendasikan (G4)', margin, y)
+      y += 4
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Kategori', 'Jumlah', 'Persentase']],
+        body: Object.entries(recCountMap)
+          .sort((a, b) => b[1] - a[1])
+          .map(([cat, count]) => [cat, `${count}`, n > 0 ? `${((count / n) * 100).toFixed(1)}%` : '0%']),
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 30) + 10
+    }
+
+    // G5: WTP Price Increase
+    const wtpPriceIncreaseMap: Record<string, number> = {}
+    workingData.forEach(s => {
+      if (s.wtp_price_increase !== null && s.wtp_price_increase !== undefined) {
+        const val = String(s.wtp_price_increase)
+        wtpPriceIncreaseMap[val] = (wtpPriceIncreaseMap[val] || 0) + 1
+      }
+    })
+
+    if (Object.keys(wtpPriceIncreaseMap).length > 0) {
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('WTP Price Increase (G5)', margin, y)
+      y += 4
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Skor', 'Jumlah', 'Persentase']],
+        body: Object.entries(wtpPriceIncreaseMap)
+          .sort((a, b) => Number(a[0]) - Number(b[0]))
+          .map(([score, count]) => [score, `${count}`, n > 0 ? `${((count / n) * 100).toFixed(1)}%` : '0%']),
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 30) + 10
+    }
 
     // --- PAGE 9: FEEDBACK ---
     doc.addPage()
@@ -753,6 +1121,134 @@ export async function GET(request: NextRequest) {
       doc.setFontSize(9)
       doc.setTextColor(150)
       doc.text('Belum ada testimoni.', margin, y)
+    }
+
+    // --- PAGE: WTP (BAGIAN I) ---
+    doc.addPage()
+    y = margin
+    y = sectionTitle(doc, 'Bagian I: Kesediaan Bayar (Willingness to Pay)', y)
+    y += 2
+
+    const wtpSurveys = workingData.filter(s => s.wtp_cost_today !== null && s.wtp_cost_today !== undefined)
+    const avgWtpCost = wtpSurveys.length > 0
+      ? parseFloat((wtpSurveys.reduce((sum, s) => sum + (s.wtp_cost_today || 0), 0) / wtpSurveys.length).toFixed(0))
+      : 0
+
+    if (wtpSurveys.length > 0) {
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100)
+      doc.text(`Total responden WTP: ${wtpSurveys.length} dari ${n}`, margin, y)
+      y += 8
+
+      // Summary KPIs
+      autoTable(doc, {
+        startY: y,
+        head: [['Indikator WTP', 'Nilai']],
+        body: [
+          ['Rata-rata Biaya Hari Ini', `Rp ${avgWtpCost.toLocaleString('id-ID')}`],
+          ['Jumlah Responden WTP', `${wtpSurveys.length}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 30) + 10
+
+      // Distribution: wtp_increase_20
+      const wtpIncrease20Map: Record<string, number> = {}
+      wtpSurveys.forEach(s => {
+        const val = s.wtp_increase_20 as string
+        if (val) wtpIncrease20Map[val] = (wtpIncrease20Map[val] || 0) + 1
+      })
+
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('Kesediaan Bayar 20% Lebih', margin, y)
+      y += 4
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Jawaban', 'Jumlah', 'Persentase']],
+        body: ['Ya', 'Tidak', 'Mungkin'].map(label => [
+          label,
+          `${wtpIncrease20Map[label] || 0}`,
+          wtpSurveys.length > 0 ? `${(((wtpIncrease20Map[label] || 0) / wtpSurveys.length) * 100).toFixed(1)}%` : '0%',
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 30) + 10
+
+      // Distribution: wtp_package_interest
+      const wtpPackageMap: Record<string, number> = {}
+      wtpSurveys.forEach(s => {
+        const val = s.wtp_package_interest as string
+        if (val) wtpPackageMap[val] = (wtpPackageMap[val] || 0) + 1
+      })
+
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+      doc.text('Minat Paket Terapi', margin, y)
+      y += 4
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Jawaban', 'Jumlah', 'Persentase']],
+        body: ['Ya', 'Tidak', 'Mungkin'].map(label => [
+          label,
+          `${wtpPackageMap[label] || 0}`,
+          wtpSurveys.length > 0 ? `${(((wtpPackageMap[label] || 0) / wtpSurveys.length) * 100).toFixed(1)}%` : '0%',
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: LIGHT_GRAY },
+        margin: { left: margin, right: margin },
+      })
+
+      y = afterTable(doc, y + 30) + 10
+
+      // Distribution: wtp_max_acceptable
+      const wtpMaxMap: Record<string, number> = {}
+      wtpSurveys.forEach(s => {
+        const val = s.wtp_max_acceptable as string
+        if (val) wtpMaxMap[val] = (wtpMaxMap[val] || 0) + 1
+      })
+
+      if (Object.keys(wtpMaxMap).length > 0) {
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2])
+        doc.text('Distribusi Biaya Maksimal yang Diterima', margin, y)
+        y += 4
+
+        autoTable(doc, {
+          startY: y,
+          head: [['Rentang Biaya', 'Jumlah', 'Persentase']],
+          body: Object.entries(wtpMaxMap)
+            .sort((a, b) => b[1] - a[1])
+            .map(([range, count]) => [
+              range,
+              `${count}`,
+              wtpSurveys.length > 0 ? `${((count / wtpSurveys.length) * 100).toFixed(1)}%` : '0%',
+            ]),
+          theme: 'grid',
+          headStyles: { fillColor: EMERALD, textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: LIGHT_GRAY },
+          margin: { left: margin, right: margin },
+        })
+      }
+    } else {
+      doc.setFontSize(10)
+      doc.setTextColor(150)
+      doc.text('Tidak ada data WTP untuk periode ini.', margin, y)
     }
 
     // Add page numbers
