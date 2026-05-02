@@ -391,9 +391,12 @@ export default function SurveyPage() {
               <p className="text-base text-slate-500 font-[family-name:var(--font-body)] leading-relaxed">
                 Semoga Allah memberikan kesembuhan yang sempurna.
               </p>
+              <p className="text-sm text-slate-600 font-[family-name:var(--font-body)] leading-relaxed">
+                Silakan hubungi petugas/peneliti di poli untuk menerima hadiah sebagai ucapan terima kasih atas partisipasi Anda.
+              </p>
             </motion.div>
 
-            {/* Voucher info */}
+            {/* Gift reminder — generic, no specific item mentioned */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -402,10 +405,10 @@ export default function SurveyPage() {
             >
               <Gift className="w-8 h-8 text-amber-500 mx-auto mb-2" />
               <p className="text-sm font-bold text-amber-800 font-[family-name:var(--font-display)]">
-                Voucher Herbal Rp 25.000
+                Hadiah untuk Anda
               </p>
               <p className="text-xs text-amber-600 mt-1 font-[family-name:var(--font-body)]">
-                Tunjukkan kode ini di apotek RSU Ja&apos;far Medika
+                Tunjukkan layar ini kepada peneliti atau petugas poli sebagai tanda bahwa survei telah selesai diisi
               </p>
             </motion.div>
 
