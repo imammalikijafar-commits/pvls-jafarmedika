@@ -708,7 +708,9 @@ function MetricsSection() {
           },
         ])
       })
-      .catch(() => { /* keep fallback */ })
+      .catch((err) => {
+        console.warn('[DPEMS Landing] Gagal fetch /api/dashboard/data, menggunakan fallback metrics:', err)
+      })
   }, [])
 
   return (

@@ -16,6 +16,7 @@ import {
 import { motion } from 'framer-motion'
 import type { DashboardData } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from "@/components/ui/button"
 
 // ─── Color Constants ────────────────────────────────────────────
 const TEAL = '#0D9488'
@@ -130,6 +131,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [period, setPeriod] = useState('30')
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
@@ -162,13 +164,20 @@ export default function DashboardPage() {
   // ─── Data Fetching ────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const res = await fetch(`/api/dashboard/data?period=${period}`)
-      if (!res.ok) throw new Error('Failed to fetch')
+      if (!res.ok) {
+        const errorBody = await res.text().catch(() => 'Unknown error')
+        throw new Error(`HTTP ${res.status}: ${errorBody}`)
+      }
       const json = await res.json()
+      if (json.error) throw new Error(json.error)
       setData(json)
     } catch (e) {
-      console.error('Failed to fetch dashboard data:', e)
+      const msg = e instanceof Error ? e.message : 'Gagal memuat data'
+      console.error('Failed to fetch dashboard data:', msg)
+      setFetchError(msg)
     } finally {
       setLoading(false)
     }
@@ -302,12 +311,46 @@ export default function DashboardPage() {
   }) ?? []
 
   // ─── Loading ──────────────────────────────────────────────────
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
           <RefreshCw className="w-10 h-10 text-teal-500 animate-spin mx-auto" />
           <p className="text-slate-500 font-medium font-[family-name:var(--font-body)]">Memuat data dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Error State (API failed) ──────────────────────────────────
+  if (fetchError || !data) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="text-center space-y-6 max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 font-[family-name:var(--font-display)]">Gagal Memuat Data</h2>
+            <p className="text-sm text-slate-500 mt-2 font-[family-name:var(--font-body)]">
+              {fetchError || 'Data dashboard tidak tersedia. Pastikan koneksi internet stabil dan coba lagi.'}
+            </p>
+          </div>
+          <div className="bg-slate-100 rounded-xl p-4 text-left">
+            <p className="text-xs font-bold text-slate-600 mb-2">Checklist Debugging:</p>
+            <ul className="text-xs text-slate-500 space-y-1.5">
+              <li>1. Pastikan file <code className="bg-slate-200 px-1 rounded">.env.local</code> berisi variabel Supabase</li>
+              <li>2. Cek: <code className="bg-slate-200 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code></li>
+              <li>3. Cek: <code className="bg-slate-200 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code></li>
+              <li>4. Cek: <code className="bg-slate-200 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code></li>
+              <li>5. Pastikan schema sudah di-apply di Supabase SQL Editor</li>
+              <li>6. Buka DevTools (F12) &rarr; Console &rarr; lihat detail error</li>
+            </ul>
+          </div>
+          <Button onClick={fetchData} className="bg-teal-600 hover:bg-teal-700 text-white">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Coba Lagi
+          </Button>
         </div>
       </div>
     )
