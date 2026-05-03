@@ -65,15 +65,7 @@ export default function DashboardPage() {
     { name: 'Detractors', value: data.nps.detractors, color: '#dc2626' },
   ] : []
 
-  const spiritualData = data ? [
-    { dimension: 'Salam & Doa', score: data.spiritualAvg.spiritualComfort },
-    { dimension: 'Respek Islam', score: data.spiritualAvg.culturalRespect },
-    { dimension: 'Fasilitas Ibadah', score: data.spiritualAvg.facility },
-    { dimension: 'Spiritual Healing', score: data.spiritualAvg.healing },
-    { dimension: 'Dukungan Spiritual', score: data.spiritualAvg.support },
-  ] : []
-
-  // v2.0: Spiritual 9 Dimensions
+  // v2.0 FINAL: Spiritual 9 Dimensions (F1-F9) — primary, no legacy fallback
   const spiritual9Data = data?.spiritual9Avg ? [
     { dimension: 'F1 Adab Islami', score: data.spiritual9Avg.f1AdabIslami },
     { dimension: 'F2 Gender Concord.', score: data.spiritual9Avg.f2GenderConcordance },
@@ -83,15 +75,15 @@ export default function DashboardPage() {
     { dimension: 'F6 Spiritual Act.', score: data.spiritual9Avg.f6SpiritualActivation },
     { dimension: 'F7 Holistic Peace', score: data.spiritual9Avg.f7HolisticPeace },
     { dimension: 'F8 Spiritual Comm.', score: data.spiritual9Avg.f8SpiritualCommunication },
-    { dimension: 'F9 Kedekatan Tuhan', score: data.spiritual9Avg.f9Reversed },
-  ] : spiritualData
+    { dimension: 'F9 (reversed)', score: data.spiritual9Avg.f9Reversed },
+  ] : []
 
-  // v2.0: Clarity of Role (D1-D4)
+  // v2.0 FINAL: Clarity of Role (D1-D4)
   const clarityData = data?.clarityAvg ? [
-    { dimension: 'D1 Clarity Role', score: data.clarityAvg.d1ClarityRole },
-    { dimension: 'D2 Penjelasan', score: data.clarityAvg.d2ClarityExplanation },
-    { dimension: 'D3 Nyaman', score: data.clarityAvg.d3ClarityComfortable },
-    { dimension: 'D4 Spesialis', score: data.clarityAvg.d4ClaritySpecialist },
+    { dimension: 'D1 Pemahaman Peran Pendukung', score: data.clarityAvg.d1ClarityRole },
+    { dimension: 'D2 Penjelasan Dokter', score: data.clarityAvg.d2ClarityExplanation },
+    { dimension: 'D3 Nyaman Bertanya', score: data.clarityAvg.d3ClarityComfortable },
+    { dimension: 'D4 Kembali ke Spesialis', score: data.clarityAvg.d4ClaritySpecialist },
   ] : []
 
   // v2.0: Herb Service Data
@@ -486,16 +478,18 @@ export default function DashboardPage() {
                   <div className="min-w-0">
                     <p className="font-bold text-blue-800 text-sm font-[family-name:var(--font-display)]">Spiritual Wellness</p>
                     <div className="mt-2 space-y-1">
-                      {spiritualData.map((s) => (
+                      {spiritual9Data.slice(0, 5).map((s) => (
                         <div key={s.dimension} className="flex items-center justify-between text-[11px]">
                           <span className="text-blue-600">{s.dimension}</span>
                           <span className="font-bold text-blue-700">{s.score.toFixed(2)}/5</span>
                         </div>
                       ))}
                     </div>
+                    {spiritual9Data.length > 0 && (
                     <p className="text-blue-500 text-[11px] mt-1">
-                      Rata-rata: {((data.spiritualAvg.spiritualComfort + data.spiritualAvg.culturalRespect + data.spiritualAvg.facility + data.spiritualAvg.healing + data.spiritualAvg.support) / 5).toFixed(2)}/5
+                      Rata-rata: {(spiritual9Data.reduce((sum, s) => sum + s.score, 0) / spiritual9Data.length).toFixed(2)}/5
                     </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -798,11 +792,11 @@ export default function DashboardPage() {
                 <p className="text-xs text-slate-500 mt-0.5">Rata-rata skor spiritual pasien (1-5)</p>
                 <div className="h-72 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={spiritualData} cx="50%" cy="50%" outerRadius="75%">
+                    <RadarChart data={spiritual9Data} cx="50%" cy="50%" outerRadius="75%">
                       <PolarGrid stroke="#e2e8f0" />
                       <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11 }} stroke="#64748b" />
                       <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                      <Radar name="Skor" dataKey="score" stroke={TEAL} fill={TEAL} fillOpacity={0.2} strokeWidth={2} />
+                      <Radar name="Skor" dataKey="score" stroke={BLUE} fill={BLUE} fillOpacity={0.15} strokeWidth={2} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
@@ -857,7 +851,7 @@ export default function DashboardPage() {
                       <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
                         <div className="bg-blue-500 rounded-full h-2.5 transition-all" style={{ width: `${data.totalSurveys > 0 ? (c / data.totalSurveys) * 100 : 0}%` }} />
                       </div>
-                      <span className="text-[11px] text-slate-600 w-16 shrink-0">{g === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+                      <span className="text-[11px] text-slate-600 w-16 shrink-0">{g}</span>
                       <span className="text-[11px] font-bold w-6 text-right text-slate-700">{c}</span>
                     </div>
                   ))}

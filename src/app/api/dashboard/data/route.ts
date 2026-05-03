@@ -58,14 +58,7 @@ export async function GET(request: NextRequest) {
     servqualDims.sort((a, b) => a.score - b.score)
     const worstServqualDimension = { name: servqualDims[0].name, score: servqualDims[0].score }
 
-    // --- Spiritual Averages (using all 5 schema fields) ---
-    const spiritualAvg = {
-      spiritualComfort: avg(surveys.map((s) => s.spiritual_salam_doa)),
-      culturalRespect: avg(surveys.map((s) => s.spiritual_islam_respect)),
-      facility: avg(surveys.map((s) => s.spiritual_facility)),
-      healing: avg(surveys.map((s) => s.spiritual_healing)),
-      support: avg(surveys.map((s) => s.spiritual_support)),
-    }
+    // --- Spiritual 9D + Clarity computed below (lines ~195-235) ---
 
     // --- Unit Performance (single unit) ---
     const unitPerformance = [{
@@ -186,7 +179,7 @@ export async function GET(request: NextRequest) {
     const responseRate = Math.min(95, parseFloat(((totalSurveys / (totalSurveys + 45)) * 100).toFixed(1)))
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: Spiritual 9 Dimensions (F1-F9)
+    // v2.0: Spiritual 9 Dimensions (F1-F9) — F9 reverse-coded
     // ═══════════════════════════════════════════════════════
     const spiritual9Fields = [
       'f1_adab_islami', 'f2_gender_concordance', 'f3_prayer_accommodation',
@@ -199,11 +192,12 @@ export async function GET(request: NextRequest) {
     })
     surveys.forEach(s => {
       spiritual9Fields.forEach(f => {
-        const v = (s as Record<string, unknown>)[f] as number | null
+        const v = (s as unknown as Record<string, unknown>)[f] as number | null
         if (v !== null && v !== undefined) { spiritual9Sums[f].sum += v; spiritual9Sums[f].count++ }
       })
     })
     const avg9 = (key: string) => spiritual9Sums[key].count > 0 ? parseFloat((spiritual9Sums[key].sum / spiritual9Sums[key].count).toFixed(2)) : 0
+    const f9Reversed = spiritual9Sums['f9_reverse_coded'].count > 0 ? parseFloat((6 - spiritual9Sums['f9_reverse_coded'].sum / spiritual9Sums['f9_reverse_coded'].count).toFixed(2)) : 0
     const spiritual9Avg = {
       f1AdabIslami: avg9('f1_adab_islami'),
       f2GenderConcordance: avg9('f2_gender_concordance'),
@@ -213,18 +207,18 @@ export async function GET(request: NextRequest) {
       f6SpiritualActivation: avg9('f6_spiritual_activation'),
       f7HolisticPeace: avg9('f7_holistic_peace'),
       f8SpiritualCommunication: avg9('f8_spiritual_communication'),
-      f9KedekatanTuhan: avg9('f9_reverse_coded'),
-      f9Reversed: spiritual9Sums['f9_reverse_coded'].count > 0 ? parseFloat((6 - spiritual9Sums['f9_reverse_coded'].sum / spiritual9Sums['f9_reverse_coded'].count).toFixed(2)) : 0,
+      f9ReverseCoded: avg9('f9_reverse_coded'),
+      f9Reversed,
     }
 
     // ═══════════════════════════════════════════════════════
     // v2.0: Clarity D1-D4
     // ═══════════════════════════════════════════════════════
     const clarityAvg = {
-      d1ClarityRole: avg(surveys.map(s => s.info_acupuncture_support)),
-      d2ClarityExplanation: avg(surveys.map(s => s.info_understanding)),
-      d3ClarityComfortable: avg(surveys.map(s => s.info_sufficient)),
-      d4ClaritySpecialist: avg(surveys.map(s => s.info_comfortable_asking)),
+      d1ClarityRole: avg(surveys.map(s => s.d1_clarity_role)),
+      d2ClarityExplanation: avg(surveys.map(s => s.d2_clarity_explanation)),
+      d3ClarityComfortable: avg(surveys.map(s => s.d3_clarity_comfortable)),
+      d4ClaritySpecialist: avg(surveys.map(s => s.d4_clarity_specialist)),
     }
 
     // ═══════════════════════════════════════════════════════
@@ -251,12 +245,12 @@ export async function GET(request: NextRequest) {
     if (barthelSurveys.length > 0) {
       const firstScores = barthelSurveys.map(s => {
         let total = 0
-        barthelFields.forEach(f => { total += (s as Record<string, unknown>)[`barthel_${f}_first`] as number || 0 })
+        barthelFields.forEach(f => { total += (s as unknown as Record<string, unknown>)[`barthel_${f}_first`] as number || 0 })
         return total
       })
       const currentScores = barthelSurveys.map(s => {
         let total = 0
-        barthelFields.forEach(f => { total += (s as Record<string, unknown>)[`barthel_${f}_current`] as number || 0 })
+        barthelFields.forEach(f => { total += (s as unknown as Record<string, unknown>)[`barthel_${f}_current`] as number || 0 })
         return total
       })
       barthelAvgFirst = firstScores.reduce((a, b) => a + b, 0) / firstScores.length
@@ -269,7 +263,7 @@ export async function GET(request: NextRequest) {
     if (isiSurveys.length > 0) {
       const isiScores = isiSurveys.map(s => {
         let total = 0
-        for (let i = 1; i <= 7; i++) { total += (s as Record<string, unknown>)[`isi_${i}`] as number || 0 }
+        for (let i = 1; i <= 7; i++) { total += (s as unknown as Record<string, unknown>)[`isi_${i}`] as number || 0 }
         return total
       })
       isiAvgScore = isiScores.reduce((a, b) => a + b, 0) / isiScores.length
@@ -281,7 +275,7 @@ export async function GET(request: NextRequest) {
     if (wellnessSurveys.length > 0) {
       const wellnessScores = wellnessSurveys.map(s => {
         let total = 0
-        for (let i = 1; i <= 3; i++) { total += (s as Record<string, unknown>)[`wellness_${i}`] as number || 0 }
+        for (let i = 1; i <= 3; i++) { total += (s as unknown as Record<string, unknown>)[`wellness_${i}`] as number || 0 }
         return total / 3
       })
       wellnessAvgScore = wellnessScores.reduce((a, b) => a + b, 0) / wellnessScores.length
@@ -360,7 +354,6 @@ export async function GET(request: NextRequest) {
       nps: { promoters, passives, detractors, score: npsScore, total: npsTotal },
       servqual,
       unitPerformance,
-      spiritualAvg,
       recentFeedback,
       recentAlerts: alerts || [],
       demographics: {

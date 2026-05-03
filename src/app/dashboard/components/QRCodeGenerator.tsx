@@ -291,7 +291,7 @@ export default function QRCodeGenerator({ data }: { data: DashboardData | null }
                 <p className="text-[10px] text-teal-600">Pain Reduction</p>
               </div>
               <div className="bg-white/70 rounded-lg p-3 text-center">
-                <p className="text-lg font-bold text-emerald-600 font-[family-name:var(--font-display)]">{data?.nps?.score > 0 ? `+${data.nps.score}` : data?.nps?.score ?? '-'}</p>
+                <p className="text-lg font-bold text-emerald-600 font-[family-name:var(--font-display)]">{(data?.nps?.score ?? 0) > 0 ? `+${data?.nps?.score}` : data?.nps?.score ?? '-'}</p>
                 <p className="text-[10px] text-teal-600">NPS Score</p>
               </div>
             </div>

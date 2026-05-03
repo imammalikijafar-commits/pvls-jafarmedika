@@ -38,11 +38,11 @@ export interface SurveyRow {
   herb_availability: number | null
   herb_affordability: number | null
   herb_pharmacist: number | null
-  adjuvant_role: string | null
-  info_acupuncture_support: number | null
-  info_understanding: number | null
-  info_sufficient: number | null
-  info_comfortable_asking: number | null
+  // Clarity of Role (Bagian D) — v2.0.0 FINAL
+  d1_clarity_role: number | null
+  d2_clarity_explanation: number | null
+  d3_clarity_comfortable: number | null
+  d4_clarity_specialist: number | null
   barthel_eat_first: number | null
   barthel_eat_current: number | null
   barthel_bath_first: number | null
@@ -73,20 +73,21 @@ export interface SurveyRow {
   wellness_1: number | null
   wellness_2: number | null
   wellness_3: number | null
-  spiritual_salam_doa: number | null
-  spiritual_islam_respect: number | null
-  spiritual_facility: number | null
-  spiritual_healing: number | null
-  spiritual_support: number | null
+  // Spiritual 9 Dimensions (Bagian F) — v2.0.0 FINAL
   f1_adab_islami: number | null
   f2_gender_concordance: number | null
-  f6_doa_kesembuhan: number | null
-  f7_keluarga_support: number | null
-  f8_keikhlasan: number | null
-  f9_kedekatan_tuhan: number | null
+  f3_prayer_accommodation: number | null
+  f4_halal_assurance: number | null
+  f5_tibb_nabawi: number | null
+  f6_spiritual_activation: number | null
+  f7_holistic_peace: number | null
+  f8_spiritual_communication: number | null
+  f9_reverse_coded: number | null
   wtp_price_increase: number | null
   wtp_cost_today: number | null
-  wtp_increase_20: number | null
+  wtp_increase_20: string | null
+  wtp_package_interest: string | null
+  wtp_max_acceptable: string | null
   h1_liked: string[] | null
   h1_liked_other: string | null
   h2_suggested: string[] | null

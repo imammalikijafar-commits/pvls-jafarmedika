@@ -8,13 +8,13 @@ export const EMERALD = '#059669'
 export const NPS_COLORS = ['#059669', '#d97706', '#dc2626']
 
 export const CONDITION_TYPES = [
-  'Stroke / Pasca Stroke',
-  'Nyeri Sendi (Rematik / OA)',
-  'Nyeri Punggung / Saraf Kejepit',
-  'Migrain / Sakit Kepala Kronis',
+  'Stroke/Pasca Stroke',
+  'Nyeri Sendi (Rematik/OA)',
+  'Nyeri Punggung/Saraf Kejepit',
+  'Migrain/Sakit Kepala Kronis',
   'Gangguan Tidur (Insomnia)',
   'Kondisi Neurologis Lainnya',
-  'Wellness / Pemeliharaan Kesehatan',
+  'Wellness/Pemeliharaan Kesehatan',
   'Lainnya',
 ]
 

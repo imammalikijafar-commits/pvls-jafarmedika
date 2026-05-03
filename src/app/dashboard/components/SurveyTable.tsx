@@ -234,7 +234,7 @@ export default function SurveyTable({
                               </span>
                               <span className="text-slate-600 text-xs w-16 shrink-0">{s.age_range || '-'}</span>
                               <span className="text-slate-600 text-xs w-14 shrink-0">
-                                {s.gender === 'L' ? 'L' : s.gender === 'P' ? 'P' : '-'}
+                                {s.gender || '-'}
                               </span>
                               <span className="text-slate-600 text-xs flex-1 min-w-0 truncate">
                                 {s.condition_type || '-'}
@@ -387,15 +387,15 @@ export default function SurveyTable({
                                   ) : null}
 
                                   {/* Clarity D1-D4 */}
-                                  {(s.info_acupuncture_support || s.info_understanding || s.info_sufficient || s.info_comfortable_asking) && (
+                                  {(s.d1_clarity_role || s.d2_clarity_explanation || s.d3_clarity_comfortable || s.d4_clarity_specialist) && (
                                     <div className="border-t border-slate-200 pt-3">
                                       <span className="text-[11px] text-slate-400 block mb-2">Clarity of Role (D1-D4)</span>
                                       <div className="flex flex-wrap gap-2">
                                         {[
-                                          { label: 'D1 Dukungan', value: s.info_acupuncture_support },
-                                          { label: 'D2 Pemahaman', value: s.info_understanding },
-                                          { label: 'D3 Kecukupan', value: s.info_sufficient },
-                                          { label: 'D4 Nyaman', value: s.info_comfortable_asking },
+                                          { label: 'D1 Clarity Role', value: s.d1_clarity_role },
+                                          { label: 'D2 Penjelasan', value: s.d2_clarity_explanation },
+                                          { label: 'D3 Nyaman', value: s.d3_clarity_comfortable },
+                                          { label: 'D4 Spesialis', value: s.d4_clarity_specialist },
                                         ].map((dim) => (
                                           <span
                                             key={dim.label}
@@ -415,20 +415,20 @@ export default function SurveyTable({
                                   )}
 
                                   {/* Spiritual F1-F9 */}
-                                  {(s.spiritual_salam_doa || s.spiritual_islam_respect || s.spiritual_facility || s.spiritual_healing || s.spiritual_support || s.f6_doa_kesembuhan || s.f7_keluarga_support || s.f8_keikhlasan || s.f9_kedekatan_tuhan) && (
+                                  {(s.f1_adab_islami || s.f2_gender_concordance || s.f3_prayer_accommodation || s.f4_halal_assurance || s.f5_tibb_nabawi || s.f6_spiritual_activation || s.f7_holistic_peace || s.f8_spiritual_communication || s.f9_reverse_coded) && (
                                     <div className="border-t border-slate-200 pt-3">
                                       <span className="text-[11px] text-slate-400 block mb-2">Spiritual (F1-F9)</span>
                                       <div className="flex flex-wrap gap-2">
                                         {[
-                                          { label: 'F1 Salam Doa', value: s.spiritual_salam_doa },
-                                          { label: 'F2 Respek Islam', value: s.spiritual_islam_respect },
-                                          { label: 'F3 Fasilitas', value: s.spiritual_facility },
-                                          { label: 'F4 Healing', value: s.spiritual_healing },
-                                          { label: 'F5 Support', value: s.spiritual_support },
-                                          { label: 'F6 Doa Kesembuhan', value: s.f6_doa_kesembuhan },
-                                          { label: 'F7 Keluarga', value: s.f7_keluarga_support },
-                                          { label: 'F8 Keikhlasan', value: s.f8_keikhlasan },
-                                          { label: 'F9 Kedekatan Tuhan', value: s.f9_kedekatan_tuhan },
+                                          { label: 'F1 Adab Islami', value: s.f1_adab_islami },
+                                          { label: 'F2 Gender Concord.', value: s.f2_gender_concordance },
+                                          { label: 'F3 Prayer Accom.', value: s.f3_prayer_accommodation },
+                                          { label: 'F4 Halal Assurance', value: s.f4_halal_assurance },
+                                          { label: 'F5 Tibb Nabawi', value: s.f5_tibb_nabawi },
+                                          { label: 'F6 Spiritual Act.', value: s.f6_spiritual_activation },
+                                          { label: 'F7 Holistic Peace', value: s.f7_holistic_peace },
+                                          { label: 'F8 Spiritual Comm.', value: s.f8_spiritual_communication },
+                                          { label: 'F9 (reversed)', value: s.f9_reverse_coded ? (6 - s.f9_reverse_coded) : null },
                                         ].map((dim) => (
                                           <span
                                             key={dim.label}
