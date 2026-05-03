@@ -1,6 +1,8 @@
 // ============================================================
 // DPEMS Type Definitions
-// Matching Supabase Schema v1.2.0 (Kuesioner Integrative Medicine + Conditional Branching)
+// Matching Supabase Schema v2.0.0 FINAL (Clean — No Legacy)
+// 9 Sections (A-I): Demographics, SERVQUAL, Herbal, Clarity,
+//   Clinical, Spiritual 9D, NPS/Loyalty, Feedback, WTP
 // RSU Ja'far Medika Karanganyar
 // ===========================================================
 
@@ -41,8 +43,11 @@ export interface Survey {
   gender: string | null
   education: string | null
   occupation: string | null
+  occupation_other: string | null
+  income_range: string | null
   patient_type: string | null
   condition_type: string | null
+  condition_type_other: string | null
   visit_count: string | null
   referral_source: string | null
 
@@ -62,12 +67,11 @@ export interface Survey {
   herb_affordability: number | null
   herb_pharmacist: number | null
 
-  // Adjuvant Therapy (Bagian D)
-  adjuvant_role: string | null
-  info_acupuncture_support: number | null
-  info_understanding: number | null
-  info_sufficient: number | null
-  info_comfortable_asking: number | null
+  // Clarity of Therapeutic Role (Bagian D) — 4 items
+  d1_clarity_role: number | null
+  d2_clarity_explanation: number | null
+  d3_clarity_comfortable: number | null
+  d4_clarity_specialist: number | null
 
   // Clinical Outcomes (Bagian E) — Conditional based on condition_type
   // E1: VAS for pain conditions
@@ -108,14 +112,7 @@ export interface Survey {
   wellness_2: number | null
   wellness_3: number | null
 
-  // Spiritual & Holistic (Bagian F) — original 5
-  spiritual_salam_doa: number | null
-  spiritual_islam_respect: number | null
-  spiritual_facility: number | null
-  spiritual_healing: number | null
-  spiritual_support: number | null
-
-  // Spiritual 9 Dimensions (F1-F9 extended)
+  // Spiritual & Holistic 9 Dimensions (Bagian F) — F1-F9
   f1_adab_islami: number | null
   f2_gender_concordance: number | null
   f3_prayer_accommodation: number | null
@@ -130,22 +127,23 @@ export interface Survey {
   nps_score: number | null
   visit_plan: string | null
   has_recommended: string | null
-  recommendation_count: number | null
+  recommendation_count: string | null
+  wtp_price_increase: number | null
 
-  // WTP (Willingness to Pay)
+  // Feedback / Masukan (Bagian H)
+  best_experience: string | null
+  improvement_suggestion: string | null
+  testimonial: string | null
+  h1_liked: string[] | null
+  h1_liked_other: string | null
+  h2_suggested: string[] | null
+  h2_suggested_other: string | null
+
+  // Willingness to Pay (Bagian I)
   wtp_cost_today: number | null
   wtp_increase_20: string | null
   wtp_package_interest: string | null
   wtp_max_acceptable: string | null
-
-  // Feedback / Masukan (Bagian H)
-  best_experience: string | null         // H1: joined from h1_liked checkbox array
-  improvement_suggestion: string | null  // H2: joined from h2_suggested checkbox array
-  testimonial: string | null             // H3: free-text testimonial
-  h1_liked: string[] | null             // H1: raw checkbox array
-  h1_liked_other: string | null         // H1: other free text
-  h2_suggested: string[] | null          // H2: raw checkbox array
-  h2_suggested_other: string | null      // H2: other free text
 
   // Full responses (for research)
   responses_json: Record<string, unknown> | null
@@ -239,13 +237,6 @@ export interface DashboardData {
     avgSatisfaction: number
     avgPainReduction: number
   }[]
-  spiritualAvg: {
-    spiritualComfort: number
-    culturalRespect: number
-    facility: number
-    healing: number
-    support: number
-  }
   recentFeedback: {
     testimonial: string | null
     bestExperience: string | null
@@ -256,6 +247,8 @@ export interface DashboardData {
     npsScore: number | null
     submittedAt: string
     conditionType?: string | null
+    ageRange?: string | null
+    gender?: string | null
     h1Liked?: string[] | null
     h2Suggested?: string[] | null
   }[]
@@ -278,8 +271,8 @@ export interface DashboardData {
   topDiagnosis: TopDiagnosis | null
   worstServqualDimension: { name: string; score: number }
 
-  // v2.0 Spiritual 9 Dimensions (F1-F9)
-  spiritual9Avg?: {
+  // v2.0 Spiritual 9 Dimensions (F1-F9) — primary spiritual data
+  spiritual9Avg: {
     f1AdabIslami: number
     f2GenderConcordance: number
     f3PrayerAccommodation: number
@@ -288,20 +281,22 @@ export interface DashboardData {
     f6SpiritualActivation: number
     f7HolisticPeace: number
     f8SpiritualCommunication: number
-    f9KedekatanTuhan: number
+    f9ReverseCoded: number
     f9Reversed: number
+    overall: number
   }
 
   // v2.0 Clarity of Role (D1-D4)
-  clarityAvg?: {
+  clarityAvg: {
     d1ClarityRole: number
     d2ClarityExplanation: number
     d3ClarityComfortable: number
     d4ClaritySpecialist: number
+    overall: number
   }
 
   // v2.0 Herbal Service
-  herbAvg?: {
+  herbAvg: {
     prescribedPct: number
     prescribedCount: number
     explanation: number
@@ -313,7 +308,7 @@ export interface DashboardData {
   }
 
   // v2.0 Clinical Outcomes
-  clinicalData?: {
+  clinicalData: {
     barthel: {
       respondentCount: number
       avgFirst: number
@@ -340,21 +335,18 @@ export interface DashboardData {
   }
 
   // v2.0 Loyalty Data
-  loyaltyData?: {
+  loyaltyData: {
     visitPlanDist: Record<string, number>
     hasRecommendedDist: Record<string, number>
     recommendationCountDist: Record<string, number>
   }
 
   // v2.0 WTP Data
-  wtpData?: {
+  wtpData: {
     avgCostToday: number
     respondentCount: number
     increase20Dist: Record<string, number>
     packageInterestDist: Record<string, number>
     maxAcceptableDist: Record<string, number>
   }
-
-  // Backward compat
-  willingnessToPay?: number
 }

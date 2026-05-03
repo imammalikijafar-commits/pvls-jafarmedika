@@ -198,6 +198,10 @@ export async function GET(request: NextRequest) {
     })
     const avg9 = (key: string) => spiritual9Sums[key].count > 0 ? parseFloat((spiritual9Sums[key].sum / spiritual9Sums[key].count).toFixed(2)) : 0
     const f9Reversed = spiritual9Sums['f9_reverse_coded'].count > 0 ? parseFloat((6 - spiritual9Sums['f9_reverse_coded'].sum / spiritual9Sums['f9_reverse_coded'].count).toFixed(2)) : 0
+    // Overall spiritual: average of F1-F8 raw + F9 reversed
+    const spiritual9Overall = parseFloat(((avg9('f1_adab_islami') + avg9('f2_gender_concordance') + avg9('f3_prayer_accommodation') +
+      avg9('f4_halal_assurance') + avg9('f5_tibb_nabawi') + avg9('f6_spiritual_activation') +
+      avg9('f7_holistic_peace') + avg9('f8_spiritual_communication') + f9Reversed) / 9).toFixed(2))
     const spiritual9Avg = {
       f1AdabIslami: avg9('f1_adab_islami'),
       f2GenderConcordance: avg9('f2_gender_concordance'),
@@ -209,16 +213,23 @@ export async function GET(request: NextRequest) {
       f8SpiritualCommunication: avg9('f8_spiritual_communication'),
       f9ReverseCoded: avg9('f9_reverse_coded'),
       f9Reversed,
+      overall: spiritual9Overall,
     }
 
     // ═══════════════════════════════════════════════════════
     // v2.0: Clarity D1-D4
     // ═══════════════════════════════════════════════════════
+    const clarityD1 = avg(surveys.map(s => s.d1_clarity_role))
+    const clarityD2 = avg(surveys.map(s => s.d2_clarity_explanation))
+    const clarityD3 = avg(surveys.map(s => s.d3_clarity_comfortable))
+    const clarityD4 = avg(surveys.map(s => s.d4_clarity_specialist))
+    const clarityOverall = parseFloat(((clarityD1 + clarityD2 + clarityD3 + clarityD4) / 4).toFixed(2))
     const clarityAvg = {
-      d1ClarityRole: avg(surveys.map(s => s.d1_clarity_role)),
-      d2ClarityExplanation: avg(surveys.map(s => s.d2_clarity_explanation)),
-      d3ClarityComfortable: avg(surveys.map(s => s.d3_clarity_comfortable)),
-      d4ClaritySpecialist: avg(surveys.map(s => s.d4_clarity_specialist)),
+      d1ClarityRole: clarityD1,
+      d2ClarityExplanation: clarityD2,
+      d3ClarityComfortable: clarityD3,
+      d4ClaritySpecialist: clarityD4,
+      overall: clarityOverall,
     }
 
     // ═══════════════════════════════════════════════════════
