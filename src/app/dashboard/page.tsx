@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Users, TrendingDown, Star, Heart, Activity, MessageCircle,
   BarChart3, RefreshCw, Shield, AlertTriangle, CheckCircle2,
-  Bell, Search, ChevronLeft, ChevronRight, FileSpreadsheet, FileText,
+  Bell, Search, ChevronLeft, ChevronRight,  // FIX 1: was ChevRight
+  FileSpreadsheet, FileText,
   X, Filter, Database, SlidersHorizontal, ChevronDown, Eye, Menu, Home,
-  Leaf, Pill, Wallet, Repeat, ThumbsUp, Moon, BookOpen
+  Leaf, Pill, Wallet, Repeat, ThumbsUp, Moon, BookOpen,
+  QrCode, Download, Printer, Copy, MapPin, Lightbulb, Check
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
@@ -17,6 +19,7 @@ import { motion } from 'framer-motion'
 import type { DashboardData } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from "@/components/ui/button"
+import { QRCodeCanvas } from 'qrcode.react'  // FIX 2: real QR code library
 
 // ─── Color Constants ────────────────────────────────────────────
 const TEAL = '#0D9488'
@@ -57,47 +60,86 @@ interface SurveyRow {
   testimonial: string | null
   education: string | null
   occupation: string | null
-  occupation_other: string | null
-  income_range: string | null
   patient_type: string | null
   visit_count: string | null
   condition_change: string | null
+  herbal_prescribed: boolean | null
+  visit_plan: string | null
+  has_recommended: string | null
+  units: { name: string } | null
+  // v2.0 extra demographic fields
+  occupation_other: string | null
+  income_range: string | null
   condition_type_other: string | null
   referral_source: string | null
-  herbal_prescribed: boolean | null
+  // v2.0 herbal fields
   herb_explanation: number | null
   herb_usage_guide: number | null
   herb_safety_trust: number | null
   herb_availability: number | null
   herb_affordability: number | null
   herb_pharmacist: number | null
-  visit_plan: string | null
-  has_recommended: string | null
-  recommendation_count: string | null
+  adjuvant_role: string | null
+  // v2.0 clarity (D1-D4)
+  info_acupuncture_support: number | null
+  info_understanding: number | null
+  info_sufficient: number | null
+  info_comfortable_asking: number | null
+  // v2.0 Barthel Index
+  barthel_eat_first: number | null
+  barthel_eat_current: number | null
+  barthel_bath_first: number | null
+  barthel_bath_current: number | null
+  barthel_groom_first: number | null
+  barthel_groom_current: number | null
+  barthel_dress_first: number | null
+  barthel_dress_current: number | null
+  barthel_toilet_first: number | null
+  barthel_toilet_current: number | null
+  barthel_bowel_first: number | null
+  barthel_bowel_current: number | null
+  barthel_bladder_first: number | null
+  barthel_bladder_current: number | null
+  barthel_transfer_first: number | null
+  barthel_transfer_current: number | null
+  barthel_mobility_first: number | null
+  barthel_mobility_current: number | null
+  barthel_stairs_first: number | null
+  barthel_stairs_current: number | null
+  // v2.0 ISI
+  isi_1: number | null
+  isi_2: number | null
+  isi_3: number | null
+  isi_4: number | null
+  isi_5: number | null
+  isi_6: number | null
+  isi_7: number | null
+  // v2.0 Wellness
+  wellness_1: number | null
+  wellness_2: number | null
+  wellness_3: number | null
+  // v2.0 Spiritual (F1-F5 original)
+  spiritual_salam_doa: number | null
+  spiritual_islam_respect: number | null
+  spiritual_facility: number | null
+  spiritual_healing: number | null
+  spiritual_support: number | null
+  // v2.0 Spiritual (F1-F9 extended)
+  f1_adab_islami: number | null
+  f2_gender_concordance: number | null
+  f6_doa_kesembuhan: number | null
+  f7_keluarga_support: number | null
+  f8_keikhlasan: number | null
+  f9_kedekatan_tuhan: number | null
+  // v2.0 WTP fields
   wtp_price_increase: number | null
   wtp_cost_today: number | null
-  wtp_increase_20: string | null
-  wtp_package_interest: string | null
-  wtp_max_acceptable: string | null
+  wtp_increase_20: number | null
+  // v2.0 Feedback (H1/H2)
   h1_liked: string[] | null
   h1_liked_other: string | null
   h2_suggested: string[] | null
   h2_suggested_other: string | null
-  d1_clarity_role: number | null
-  d2_clarity_explanation: number | null
-  d3_clarity_comfortable: number | null
-  d4_clarity_specialist: number | null
-  // Spiritual v2.0 (F1-F9)
-  f1_adab_islami: number | null
-  f2_gender_concordance: number | null
-  f3_prayer_accommodation: number | null
-  f4_halal_assurance: number | null
-  f5_tibb_nabawi: number | null
-  f6_spiritual_activation: number | null
-  f7_holistic_peace: number | null
-  f8_spiritual_communication: number | null
-  f9_reverse_coded: number | null
-  units: { name: string } | null
 }
 
 interface SurveysResponse {
@@ -125,13 +167,311 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   )
 }
 
+// ─── QR Code Generator Component ────────────────────────────────
+// Standalone component — FIX 2: uses QRCodeCanvas from qrcode.react (real QR code)
+function QRCodeGenerator({ data }: { data: DashboardData | null }) {
+  const [copied, setCopied] = useState(false)
+  const [qrSize, setQrSize] = useState(280)
+  const qrContainerRef = useRef<HTMLDivElement>(null)
+
+  // FIX 3: surveyUrl uses /survey/consent with dpems.rsjafarmedika.com fallback
+  const surveyUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/survey/consent`
+    : 'https://dpems.rsjafarmedika.com/survey/consent'
+
+  const handleDownload = () => {
+    const canvas = qrContainerRef.current?.querySelector('canvas')
+    if (!canvas) return
+    const link = document.createElement('a')
+    link.download = 'QR-Akupuntur-Herbal-RSU-Jafar-Medika.png'
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+
+  const handlePrint = () => {
+    const canvas = qrContainerRef.current?.querySelector('canvas')
+    if (!canvas) return
+    const imgSrc = canvas.toDataURL('image/png')
+    const dateStr = new Date().toLocaleDateString('id-ID')
+    const win = window.open('', '_blank')
+    if (!win) return
+    // FIX 3: string concatenation for </script> tags to avoid JSX parsing issues
+    const html = '<html><head><title>QR Code - Poli Akupuntur & Herbal</title>'
+      + '<style>'
+      + 'body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;margin:0;padding:40px}'
+      + 'img{width:400px;height:400px;border:2px solid #0D9488;border-radius:16px;padding:16px}'
+      + 'h1{font-size:18px;color:#1e293b;margin:16px 0 4px}'
+      + 'h2{font-size:14px;color:#475569;margin:2px 0;font-weight:400}'
+      + 'p{font-size:13px;color:#64748b;margin:2px 0}'
+      + '.footer{margin-top:24px;font-size:11px;color:#94a3b8}'
+      + '.placement{margin-top:20px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;text-align:left;max-width:500px}'
+      + '.placement h3{font-size:13px;color:#1e293b;margin:0 0 8px}'
+      + '.placement ul{margin:0;padding-left:20px;color:#64748b;font-size:12px}'
+      + '.placement li{margin-bottom:4px}'
+      + '</style></head>'
+      + '<body>'
+      + '<h1>Poli Akupuntur & Herbal</h1>'
+      + "<h2>RSU Ja'far Medika Karanganyar</h2>"
+      + '<img src="' + imgSrc + '" />'
+      + '<p>Scan QR code untuk mengisi survei pengalaman pasien</p>'
+      + '<p class="footer">Generated by DPEMS &mdash; ' + dateStr + '</p>'
+      + '<div class="placement">'
+      + '<h3>Panduan Penempatan</h3>'
+      + '<ul>'
+      + '<li>Ruang tunggu poli — tempel di dinding dekat kursi tunggu utama</li>'
+      + '<li>Meja resepsionis — letakkan di meja depan agar staf bisa menunjukkan ke pasien</li>'
+      + '<li>Area terapi / ruang akupuntur — pasang di dekat pintu masuk ruang terapi</li>'
+      + '<li>Kartu nama / brosur pasien — sertakan di materi edukasi pasien baru</li>'
+      + '</ul>'
+      + '</div>'
+      + '<scr' + 'ipt>window.onload=function(){window.print();};</scr' + 'ipt>'
+      + '</body></html>'
+    win.document.write(html)
+    win.document.close()
+  }
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(surveyUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      const textArea = document.createElement('textarea')
+      textArea.value = surveyUrl
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const placementGuides = [
+    { location: 'Ruang tunggu poli', desc: 'Tempel di dinding dekat kursi tunggu utama', emoji: '🚪' },
+    { location: 'Meja resepsionis', desc: 'Letakkan di meja depan agar staf bisa menunjukkan ke pasien', emoji: '📝' },
+    { location: 'Area terapi / ruang akupuntur', desc: 'Pasang di dekat pintu masuk ruang terapi', emoji: '🪑' },
+    { location: 'Kartu nama / brosur pasien', desc: 'Sertakan di materi edukasi pasien baru', emoji: '👨‍⚕️' },
+  ]
+
+  const usageTips = [
+    { title: 'Ukuran Cetak', desc: 'Minimal 10x10 cm agar mudah discan dari jarak 1 meter' },
+    { title: 'Laminasi', desc: 'Gunakan kertas glossy atau laminasi agar tahan lama' },
+    { title: 'Pencahayaan', desc: 'Pastikan area penempatan QR Code memiliki cahaya cukup' },
+    { title: 'Label', desc: 'Beri label "Scan untuk isi survei" di bawah QR Code' },
+    { title: 'Maintenance', desc: 'Ganti QR Code setiap 6 bulan atau jika URL berubah' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center shrink-0 shadow-sm">
+            <QrCode className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-800 font-[family-name:var(--font-display)]">
+                QR Code Survei Pasien
+              </h3>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+                Auto-Generate
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Generate dan cetak QR Code untuk disimpan di ruang tunggu Poli Akupuntur &amp; Herbal. Pasien cukup scan QR code untuk langsung mengisi survei pengalaman mereka.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* QR Code Card */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h4 className="text-sm font-bold text-slate-800 font-[family-name:var(--font-display)]">Poli Akupuntur &amp; Herbal</h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">Layanan integratif stroke &amp; nyeri</p>
+            </div>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+              Aktif
+            </span>
+          </div>
+
+          {/* QR Code */}
+          <div className="flex flex-col items-center">
+            <div
+              ref={qrContainerRef}
+              className="p-4 bg-white rounded-2xl border-2 border-dashed border-teal-200 shadow-sm"
+            >
+              <QRCodeCanvas
+                value={surveyUrl || 'https://dpems.rsjafarmedika.com/survey/consent'}
+                size={qrSize}
+                bgColor="#ffffff"
+                fgColor="#0f172a"
+                level="H"
+                includeMargin={false}
+              />
+            </div>
+
+            {/* URL Preview */}
+            <div className="mt-4 w-full bg-slate-50 rounded-lg p-3 flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-400 font-medium mb-0.5">URL Survei</p>
+                <p className="text-xs text-slate-600 truncate font-mono">
+                  {surveyUrl || 'https://dpems.rsjafarmedika.com/survey/consent'}
+                </p>
+              </div>
+              <button
+                onClick={handleCopyUrl}
+                className="p-2 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors shrink-0"
+                title="Salin URL"
+              >
+                {copied ? <Check className="w-4 h-4 text-teal-600" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Size Selector */}
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-[11px] text-slate-500 font-medium">Ukuran:</span>
+            <div className="flex gap-1.5">
+              {[
+                { label: 'S', size: 200 },
+                { label: 'M', size: 280 },
+                { label: 'L', size: 380 },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => setQrSize(opt.size)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                    qrSize === opt.size
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Actions + Placement + Tips + Stats */}
+        <div className="space-y-6">
+          {/* Action Buttons */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
+            <h4 className="text-sm font-bold text-slate-800 font-[family-name:var(--font-display)] mb-4">Aksi</h4>
+            <button
+              onClick={handleDownload}
+              className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 text-white hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30"
+            >
+              <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                <Download className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Download PNG</p>
+                <p className="text-[10px] text-teal-100">Simpan file gambar QR Code</p>
+              </div>
+            </button>
+            <button
+              onClick={handlePrint}
+              className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
+            >
+              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <Printer className="w-4 h-4 text-slate-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-slate-700">Cetak / Print</p>
+                <p className="text-[10px] text-slate-400">Buka dialog cetak langsung</p>
+              </div>
+            </button>
+            <button
+              onClick={handleCopyUrl}
+              className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
+            >
+              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                {copied ? <Check className="w-4 h-4 text-teal-600" /> : <Copy className="w-4 h-4 text-slate-600" />}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-slate-700">{copied ? 'URL Tersalin!' : 'Salin URL Survei'}</p>
+                <p className="text-[10px] text-slate-400">{surveyUrl || 'https://dpems.rsjafarmedika.com/survey/consent'}</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Placement Guide */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h4 className="text-sm font-bold text-slate-800 font-[family-name:var(--font-display)] mb-3 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-teal-600" />
+              Panduan Penempatan
+            </h4>
+            <div className="space-y-2.5">
+              {placementGuides.map((item) => (
+                <div key={item.emoji} className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-teal-50 border border-teal-200/60 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                    {item.emoji}
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">{item.location}</p>
+                    <p className="text-[11px] text-slate-400">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Usage Tips */}
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100/60 rounded-xl border border-amber-200 p-4">
+            <p className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
+              <Lightbulb className="w-3.5 h-3.5" />
+              Tips Pemakaian
+            </p>
+            <ul className="space-y-1.5 text-[11px] text-amber-700 leading-relaxed">
+              {usageTips.map((tip) => (
+                <li key={tip.title} className="flex gap-2">
+                  <span className="text-amber-500 shrink-0">&#8226;</span>
+                  <span><span className="font-medium">{tip.title}:</span> {tip.desc}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Quick Stats Card */}
+          <div className="bg-gradient-to-br from-teal-50 to-teal-100/60 rounded-xl border border-teal-200 p-4">
+            <p className="text-xs font-semibold text-teal-800 mb-3">Quick Stats</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/70 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-teal-700 font-[family-name:var(--font-display)]">{data?.totalSurveys ?? 0}</p>
+                <p className="text-[10px] text-teal-600">Total Survei</p>
+              </div>
+              <div className="bg-white/70 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-teal-700 font-[family-name:var(--font-display)]">{data?.responseRate ?? 0}%</p>
+                <p className="text-[10px] text-teal-600">Response Rate</p>
+              </div>
+              <div className="bg-white/70 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-amber-600 font-[family-name:var(--font-display)]">{data?.avgPainReduction ?? 0}%</p>
+                <p className="text-[10px] text-teal-600">Pain Reduction</p>
+              </div>
+              <div className="bg-white/70 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-emerald-600 font-[family-name:var(--font-display)]">{data?.nps?.score > 0 ? `+${data.nps.score}` : data?.nps?.score ?? '-'}</p>
+                <p className="text-[10px] text-teal-600">NPS Score</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Component ─────────────────────────────────────────────
 export default function DashboardPage() {
   // ─── State ────────────────────────────────────────────────────
   const [data, setData] = useState<DashboardData | null>(null)
   const [period, setPeriod] = useState('30')
   const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
@@ -161,6 +501,9 @@ export default function DashboardPage() {
   // Data Survei filter panel
   const [dataFilterOpen, setDataFilterOpen] = useState(false)
 
+  // Error state
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   // ─── Data Fetching ────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -168,16 +511,18 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`/api/dashboard/data?period=${period}`)
       if (!res.ok) {
-        const errorBody = await res.text().catch(() => 'Unknown error')
-        throw new Error(`HTTP ${res.status}: ${errorBody}`)
+        let errorMsg = 'Gagal memuat data dashboard. Silakan coba lagi.'
+        try {
+          const body = await res.json()
+          errorMsg = body.error || body.message || errorMsg
+        } catch { /* ignore parse error */ }
+        throw new Error(errorMsg)
       }
       const json = await res.json()
-      if (json.error) throw new Error(json.error)
       setData(json)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Gagal memuat data'
-      console.error('Failed to fetch dashboard data:', msg)
-      setFetchError(msg)
+      console.error('Failed to fetch dashboard data:', e)
+      setFetchError(e instanceof Error ? e.message : 'Gagal memuat data dashboard. Silakan coba lagi.')
     } finally {
       setLoading(false)
     }
@@ -283,15 +628,42 @@ export default function DashboardPage() {
   ] : []
 
   const spiritualData = data ? [
-    { dimension: 'Adab & Etika Islami', score: data.spiritualAvg.f1AdabIslami, key: 'f1' },
-    { dimension: 'Gender Concordance', score: data.spiritualAvg.f2GenderConcordance, key: 'f2' },
-    { dimension: 'Waktu Shalat', score: data.spiritualAvg.f3PrayerAccommodation, key: 'f3' },
-    { dimension: 'Jaminan Halal & Thayyib', score: data.spiritualAvg.f4HalalAssurance, key: 'f4' },
-    { dimension: 'Tibb Nabawi', score: data.spiritualAvg.f5TibbNabawi, key: 'f5' },
-    { dimension: 'Aktivasi Spiritual', score: data.spiritualAvg.f6SpiritualActivation, key: 'f6' },
-    { dimension: 'Ketenangan Holistik', score: data.spiritualAvg.f7HolisticPeace, key: 'f7' },
-    { dimension: 'Komunikasi Spiritual', score: data.spiritualAvg.f8SpiritualCommunication, key: 'f8' },
-    { dimension: 'Reverse-Coded*', score: data.spiritualAvg.f9Reversed, key: 'f9', isReversed: true },
+    { dimension: 'Salam & Doa', score: data.spiritualAvg.spiritualComfort },
+    { dimension: 'Respek Islam', score: data.spiritualAvg.culturalRespect },
+    { dimension: 'Fasilitas Ibadah', score: data.spiritualAvg.facility },
+    { dimension: 'Spiritual Healing', score: data.spiritualAvg.healing },
+    { dimension: 'Dukungan Spiritual', score: data.spiritualAvg.support },
+  ] : []
+
+  // v2.0: Spiritual 9 Dimensions (F1-F9) with f9Reversed
+  const spiritual9Data = data?.spiritual9Avg ? [
+    { dimension: 'F1 Salam & Doa', score: data.spiritual9Avg.f1SalamDoa },
+    { dimension: 'F2 Respek Islam', score: data.spiritual9Avg.f2IslamRespect },
+    { dimension: 'F3 Fasilitas Ibadah', score: data.spiritual9Avg.f3Facility },
+    { dimension: 'F4 Spiritual Healing', score: data.spiritual9Avg.f4Healing },
+    { dimension: 'F5 Dukungan Spiritual', score: data.spiritual9Avg.f5Support },
+    { dimension: 'F6 Doa Kesembuhan', score: data.spiritual9Avg.f6DoaKesembuhan },
+    { dimension: 'F7 Keluarga Support', score: data.spiritual9Avg.f7KeluargaSupport },
+    { dimension: 'F8 Keikhlasan', score: data.spiritual9Avg.f8Keikhlasan },
+    { dimension: 'F9 Kedekatan Tuhan', score: data.spiritual9Avg.f9Reversed },
+  ] : spiritualData
+
+  // v2.0: Clarity of Role (D1-D4)
+  const clarityData = data?.clarityAvg ? [
+    { dimension: 'D1 Dukungan Akupuntur', score: data.clarityAvg.d1AcupunctureSupport },
+    { dimension: 'D2 Pemahaman Info', score: data.clarityAvg.d2Understanding },
+    { dimension: 'D3 Kecukupan Info', score: data.clarityAvg.d3SufficientInfo },
+    { dimension: 'D4 Nyaman Bertanya', score: data.clarityAvg.d4ComfortableAsking },
+  ] : []
+
+  // v2.0: Herb Service Data
+  const herbData = data?.herbAvg ? [
+    { dimension: 'Penjelasan', score: data.herbAvg.explanation },
+    { dimension: 'Panduan Pemakaian', score: data.herbAvg.usageGuide },
+    { dimension: 'Kepercayaan Aman', score: data.herbAvg.safetyTrust },
+    { dimension: 'Ketersediaan', score: data.herbAvg.availability },
+    { dimension: 'Terjangkau Harga', score: data.herbAvg.affordability },
+    { dimension: 'Pelayanan Apoteker', score: data.herbAvg.pharmacist },
   ] : []
 
   // Filtered feedback
@@ -310,8 +682,8 @@ export default function DashboardPage() {
     return true
   }) ?? []
 
-  // ─── Loading ──────────────────────────────────────────────────
-  if (loading) {
+  // ─── Loading / Error ──────────────────────────────────────────
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -322,34 +694,14 @@ export default function DashboardPage() {
     )
   }
 
-  // ─── Error State (API failed) ──────────────────────────────────
-  if (fetchError || !data) {
+  if (fetchError && !data) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="text-center space-y-6 max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-8 h-8 text-red-500" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-800 font-[family-name:var(--font-display)]">Gagal Memuat Data</h2>
-            <p className="text-sm text-slate-500 mt-2 font-[family-name:var(--font-body)]">
-              {fetchError || 'Data dashboard tidak tersedia. Pastikan koneksi internet stabil dan coba lagi.'}
-            </p>
-          </div>
-          <div className="bg-slate-100 rounded-xl p-4 text-left">
-            <p className="text-xs font-bold text-slate-600 mb-2">Checklist Debugging:</p>
-            <ul className="text-xs text-slate-500 space-y-1.5">
-              <li>1. Pastikan file <code className="bg-slate-200 px-1 rounded">.env.local</code> berisi variabel Supabase</li>
-              <li>2. Cek: <code className="bg-slate-200 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code></li>
-              <li>3. Cek: <code className="bg-slate-200 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code></li>
-              <li>4. Cek: <code className="bg-slate-200 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code></li>
-              <li>5. Pastikan schema sudah di-apply di Supabase SQL Editor</li>
-              <li>6. Buka DevTools (F12) &rarr; Console &rarr; lihat detail error</li>
-            </ul>
-          </div>
-          <Button onClick={fetchData} className="bg-teal-600 hover:bg-teal-700 text-white">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Coba Lagi
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertTriangle className="w-10 h-10 text-red-400 mx-auto" />
+          <p className="text-red-600 font-medium">{fetchError}</p>
+          <Button onClick={fetchData} variant="outline" className="mt-2">
+            <RefreshCw className="w-4 h-4 mr-2" /> Coba Lagi
           </Button>
         </div>
       </div>
@@ -401,6 +753,7 @@ export default function DashboardPage() {
     { id: 'clinical', label: 'Clinical' },
     { id: 'servqual', label: 'SERVQUAL' },
     { id: 'feedback', label: 'Feedback' },
+    { id: 'qrcode', label: 'QR Code' },
     { id: 'data', label: 'Data Survei' },
   ]
 
@@ -736,247 +1089,124 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Spiritual Wellness — 9 Dimensions (F1-F9, F9 Reversed) */}
+              {/* Spiritual Wellness */}
               <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-5">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
                     <Shield className="w-4 h-4 text-white" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-bold text-blue-800 text-sm font-[family-name:var(--font-display)]">Spiritual Wellness (9D)</p>
-                      <span className="text-[11px] font-bold text-blue-700 bg-blue-200/60 px-2 py-0.5 rounded-full">
-                        {data.spiritualAvg.overall.toFixed(2)}/5
-                      </span>
-                    </div>
-                    {/* F9 Raw vs Reversed indicator */}
-                    <div className="mt-1 flex items-center gap-2 text-[10px] text-blue-500">
-                      <span>F9 Raw: {data.spiritualAvg.f9ReverseCoded.toFixed(1)}</span>
-                      <span className="text-blue-300">|</span>
-                      <span className="font-semibold text-purple-600">Reversed: {data.spiritualAvg.f9Reversed.toFixed(1)}</span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-1 gap-1 max-h-48 overflow-y-auto pr-1">
+                  <div className="min-w-0">
+                    <p className="font-bold text-blue-800 text-sm font-[family-name:var(--font-display)]">Spiritual Wellness</p>
+                    <div className="mt-2 space-y-1">
                       {spiritualData.map((s) => (
-                        <div key={s.key} className="space-y-0.5">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className={`text-blue-600 truncate ${'isReversed' in s && s.isReversed ? 'italic' : ''}`}>
-                              {s.dimension}
-                              {'isReversed' in s && s.isReversed && <span className="text-purple-400 ml-1">(reversed)</span>}
-                            </span>
-                            <span className="font-bold text-blue-700 shrink-0 ml-2">{s.score.toFixed(2)}</span>
-                          </div>
-                          <div className="w-full bg-blue-200/40 rounded-full h-1.5 overflow-hidden">
-                            <div 
-                              className={`rounded-full h-1.5 transition-all ${'isReversed' in s && s.isReversed ? 'bg-purple-500' : 'bg-blue-500'}`} 
-                              style={{ width: `${(s.score / 5) * 100}%` }} 
-                            />
-                          </div>
+                        <div key={s.dimension} className="flex items-center justify-between text-[11px]">
+                          <span className="text-blue-600">{s.dimension}</span>
+                          <span className="font-bold text-blue-700">{s.score.toFixed(2)}/5</span>
                         </div>
                       ))}
                     </div>
+                    <p className="text-blue-500 text-[11px] mt-1">
+                      Rata-rata: {((data.spiritualAvg.spiritualComfort + data.spiritualAvg.culturalRespect + data.spiritualAvg.facility + data.spiritualAvg.healing + data.spiritualAvg.support) / 5).toFixed(2)}/5
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ─── Clarity of Therapeutic Role (D) — NEW v2.0 ─── */}
-            {data.clarityAvg && (
-              <div className="bg-linear-to-br from-violet-50 to-violet-100 rounded-xl border border-violet-200 p-5">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
-                    <BookOpen className="w-4 h-4 text-white" />
+            {/* v2.0: Clarity of Role (D1-D4) */}
+            {clarityData.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                    <Shield className="w-4 h-4 text-teal-600" />
+                    Clarity of Role (D1-D4)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Pemahaman pasien tentang peran terapi adjuvan</p>
+                  <div className="space-y-3 mt-4">
+                    {clarityData.map((item) => (
+                      <div key={item.dimension} className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-slate-700">{item.dimension}</span>
+                          <span className={`text-sm font-bold ${item.score >= 4 ? 'text-teal-600' : 'text-amber-600'}`}>
+                            {item.score.toFixed(2)} / 5
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-2 rounded-full transition-all ${item.score >= 4 ? 'bg-teal-500' : 'bg-amber-500'}`}
+                            style={{ width: `${(item.score / 5) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-bold text-violet-800 text-sm font-[family-name:var(--font-display)]">Clarity of Role</p>
-                      <span className="text-[11px] font-bold text-violet-700 bg-violet-200/60 px-2 py-0.5 rounded-full">
-                        {data.clarityAvg.overall.toFixed(2)}/5
-                      </span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-1 gap-1">
-                      {[
-                        { label: 'Peran Terapi (D1)', score: data.clarityAvg.roleClarity },
-                        { label: 'Penjelasan (D2)', score: data.clarityAvg.explanationClarity },
-                        { label: 'Kenyamanan (D3)', score: data.clarityAvg.comfortableClarity },
-                        { label: 'Spesialis (D4)', score: data.clarityAvg.specialistClarity },
-                      ].map((d) => (
-                        <div key={d.label} className="space-y-0.5">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-violet-600 truncate">{d.label}</span>
-                            <span className="font-bold text-violet-700 shrink-0 ml-2">{d.score.toFixed(2)}</span>
-                          </div>
-                          <div className="w-full bg-violet-200/40 rounded-full h-1.5 overflow-hidden">
-                            <div className="bg-violet-500 rounded-full h-1.5 transition-all" style={{ width: `${(d.score / 5) * 100}%` }} />
+                </div>
+
+                {/* Loyalty & WTP */}
+                <div className="space-y-6">
+                  {/* Loyalty Section */}
+                  <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                      <Heart className="w-4 h-4 text-rose-500" />
+                      Loyalitas Pasien
+                    </h3>
+                    <div className="mt-4 space-y-4">
+                      {data?.loyaltyData?.visitPlanDist && Object.entries(data.loyaltyData.visitPlanDist).length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-700 mb-2">Rencana Kunjungan Ulang</p>
+                          <div className="space-y-1.5">
+                            {Object.entries(data.loyaltyData.visitPlanDist).sort((a, b) => b[1] - a[1]).map(([plan, count]) => {
+                              const pct = data.totalSurveys > 0 ? (count / data.totalSurveys) * 100 : 0
+                              return (
+                                <div key={plan} className="flex items-center gap-2">
+                                  <span className="text-[11px] text-slate-600 w-20 shrink-0">{plan || 'N/A'}</span>
+                                  <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div className={`h-2 rounded-full transition-all ${plan === 'Ya' ? 'bg-emerald-500' : plan === 'Tidak' ? 'bg-red-400' : 'bg-amber-400'}`} style={{ width: `${pct}%` }} />
+                                  </div>
+                                  <span className="text-[11px] font-bold text-slate-700 w-14 text-right">{count} ({pct.toFixed(0)}%)</span>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
-                      ))}
+                      )}
+                      {data?.loyaltyData?.recommendedDist && Object.entries(data.loyaltyData.recommendedDist).length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-700 mb-2">Sudah Merekomendasikan</p>
+                          <div className="flex gap-3">
+                            {Object.entries(data.loyaltyData.recommendedDist).sort((a, b) => b[1] - a[1]).map(([rec, count]) => (
+                              <div key={rec} className="flex items-center gap-1.5">
+                                <span className={`w-2 h-2 rounded-full ${rec === 'Ya' ? 'bg-emerald-500' : 'bg-red-400'}`} />
+                                <span className="text-[11px] text-slate-600">{rec || 'N/A'}: </span>
+                                <span className="text-[11px] font-bold text-slate-800">{count}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Willingness to Pay */}
+                  {data?.willingnessToPay !== undefined && data.willingnessToPay !== null && (
+                    <div className="bg-linear-to-br from-teal-50 to-teal-100 rounded-xl border border-teal-200 p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 bg-teal-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                          <Star className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-teal-800 text-sm font-[family-name:var(--font-display)]">Willingness to Pay</p>
+                          <p className="text-2xl font-extrabold text-teal-700 mt-1 font-[family-name:var(--font-display)]">
+                            {data.willingnessToPay.toFixed(1)}%
+                          </p>
+                          <p className="text-teal-600 text-[11px] mt-0.5">Persentase pasien bersedia membayar untuk layanan integratif</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-
-            {/* ─── Loyaltas & WTP Section ─── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Loyalty: Visit Plan & Recommendation */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
-                  <Repeat className="w-4 h-4 text-teal-600" />
-                  Loyaltas Pasien
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Rencana kunjungan & rekomendasi</p>
-                <div className="mt-4 space-y-5">
-                  {/* Visit Plan Distribution */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Rencana Kunjungan</p>
-                    {Object.entries(data.loyaltyData.visitPlanDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.loyaltyData.visitPlanDist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className="bg-teal-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Has Recommended Distribution */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Sudah Merekomendasikan</p>
-                    {Object.entries(data.loyaltyData.hasRecommendedDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.loyaltyData.hasRecommendedDist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className={`rounded-full h-2.5 transition-all ${label === 'Ya' ? 'bg-emerald-500' : 'bg-slate-400'}`} style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-12 shrink-0">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Recommendation Count Distribution */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Jumlah Orang Direkomendasikan</p>
-                    {Object.entries(data.loyaltyData.recommendationCountDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.loyaltyData.recommendationCountDist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className="bg-teal-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* WTP Price Increase Distribution (G5) */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">WTP Price Increase (G5)</p>
-                    {Object.entries(data.loyaltyData.wtpPriceIncreaseDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.loyaltyData.wtpPriceIncreaseDist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className="bg-amber-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-8 shrink-0">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Willingness to Pay */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
-                  <Wallet className="w-4 h-4 text-amber-500" />
-                  Willingness to Pay (WTP)
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Persepsi biaya & kemauan membayar</p>
-                <div className="mt-4 space-y-4">
-                  {/* Avg Cost Today */}
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg border border-amber-200">
-                    <div>
-                      <p className="text-[11px] text-amber-600 font-medium">Rata-rata Biaya Hari Ini</p>
-                      <p className="text-lg font-bold text-amber-800 font-[family-name:var(--font-display)]">
-                        Rp {data.wtpData.avgCostToday.toLocaleString('id-ID')}
-                      </p>
-                    </div>
-                    <span className="text-[10px] text-amber-500 bg-amber-200/50 px-2 py-0.5 rounded-full">
-                      {data.wtpData.respondentCount} responden
-                    </span>
-                  </div>
-                  {/* Increase 20% Reaction */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Reaksi Kenaikan 20%</p>
-                    {Object.entries(data.wtpData.increase20Dist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.wtpData.increase20Dist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className={`rounded-full h-2.5 transition-all ${
-                              label.toLowerCase().includes('tetap') || label.toLowerCase().includes('ya')
-                                ? 'bg-emerald-500'
-                                : label.toLowerCase().includes('tidak')
-                                ? 'bg-red-400'
-                                : 'bg-amber-500'
-                            }`} style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Package Interest */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Minat Paket Layanan</p>
-                    {Object.entries(data.wtpData.packageInterestDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.wtpData.packageInterestDist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className="bg-teal-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Max Acceptable Distribution */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Biaya Maks Diterima</p>
-                    {Object.entries(data.wtpData.maxAcceptableDist).sort((a, b) => b[1] - a[1]).map(([label, count]) => {
-                      const total = Object.values(data.wtpData.maxAcceptableDist).reduce((s, v) => s + v, 0)
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={label} className="flex items-center gap-2 mb-1.5">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div className="bg-blue-500 rounded-full h-2.5 transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[11px] text-slate-600 w-28 shrink-0 truncate">{label}</span>
-                          <span className="text-[11px] font-bold w-6 text-right text-slate-700">{count}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -1122,180 +1352,113 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ─── Herbal & Adjuvant Therapy Row ─── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Layanan Herbal */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
-                  <Leaf className="w-4 h-4 text-emerald-500" />
-                  Layanan Herbal
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                    data.herbalAvg.prescribedPct >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {data.herbalAvg.prescribedPct}% Diresepkan ({data.herbalAvg.prescribedCount} pasien)
-                  </span>
-                </div>
-                <div className="space-y-3 mt-4">
-                  {[
-                    { label: 'Penjelasan Herbal', score: data.herbalAvg.explanation },
-                    { label: 'Panduan Penggunaan', score: data.herbalAvg.usageGuide },
-                    { label: 'Kepercayaan Keamanan', score: data.herbalAvg.safetyTrust },
-                    { label: 'Ketersediaan', score: data.herbalAvg.availability },
-                    { label: 'Terjangkauan', score: data.herbalAvg.affordability },
-                    { label: 'Konsultasi Apoteker', score: data.herbalAvg.pharmacist },
-                  ].map((item) => (
-                    <div key={item.label} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-medium text-slate-700">{item.label}</span>
-                        <span className={`text-xs font-bold ${item.score >= 4 ? 'text-teal-600' : item.score >= 3 ? 'text-amber-600' : 'text-red-500'}`}>
-                          {item.score.toFixed(2)} / 5
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-2 rounded-full transition-all ${item.score >= 4 ? 'bg-teal-500' : item.score >= 3 ? 'bg-amber-500' : 'bg-red-400'}`}
-                          style={{ width: `${(item.score / 5) * 100}%` }}
-                        />
-                      </div>
+            {/* v2.0: Herbal Service Section */}
+            {herbData.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                    <Activity className="w-4 h-4 text-emerald-500" />
+                    Herbal Service Quality
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Penilaian pasien terhadap layanan herbal</p>
+                  <div className="h-56 mt-3">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={herbData} cx="50%" cy="50%" outerRadius="70%">
+                        <PolarGrid stroke="#e2e8f0" />
+                        <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 9 }} stroke="#64748b" />
+                        <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 9 }} stroke="#94a3b8" />
+                        <Radar name="Skor" dataKey="score" stroke="#059669" fill="#059669" fillOpacity={0.15} strokeWidth={2} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {data?.herbAvg && (
+                    <div className="mt-2 text-center">
+                      <span className="text-[11px] text-emerald-600 font-semibold">
+                        Herbal Prescribed Rate: {data.herbAvg.prescribedPct.toFixed(1)}%
+                      </span>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
 
-              {/* Clarity of Therapeutic Role (D1-D4) */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
-                  <Pill className="w-4 h-4 text-violet-500" />
-                  Clarity of Therapeutic Role (D1-D4)
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Klaritas peran terapis & kenyamanan pasien (v2.0)</p>
-                <div className="flex items-center justify-between mt-2 mb-3">
-                  <span className="text-xs text-slate-400">Rata-rata Keseluruhan</span>
-                  <span className="text-sm font-bold text-violet-600">{data.clarityAvg.overall.toFixed(2)} / 5</span>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: 'D1 Klaritas Role Terapis', score: data.clarityAvg.roleClarity },
-                    { label: 'D2 Klaritas Penjelasan', score: data.clarityAvg.explanationClarity },
-                    { label: 'D3 Kenyamanan', score: data.clarityAvg.comfortableClarity },
-                    { label: 'D4 Spesialis Terpercaya', score: data.clarityAvg.specialistClarity },
-                  ].map((item) => (
-                    <div key={item.label} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-medium text-slate-700">{item.label}</span>
-                        <span className={`text-xs font-bold ${item.score >= 4 ? 'text-teal-600' : item.score >= 3 ? 'text-amber-600' : 'text-red-500'}`}>
-                          {item.score.toFixed(2)} / 5
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-2 rounded-full transition-all ${item.score >= 4 ? 'bg-teal-500' : item.score >= 3 ? 'bg-amber-500' : 'bg-red-400'}`}
-                          style={{ width: `${(item.score / 5) * 100}%` }}
-                        />
-                      </div>
+                {/* Clarity D1-D4 (Clinical) */}
+                {clarityData.length > 0 && (
+                  <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
+                      <Shield className="w-4 h-4 text-teal-600" />
+                      Clarity of Role (D1-D4)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Skor pemahaman pasien (1-5)</p>
+                    <div className="h-56 mt-3">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart data={clarityData} cx="50%" cy="50%" outerRadius="70%">
+                          <PolarGrid stroke="#e2e8f0" />
+                          <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 9 }} stroke="#64748b" />
+                          <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 9 }} stroke="#94a3b8" />
+                          <Radar name="Skor" dataKey="score" stroke={TEAL} fill={TEAL} fillOpacity={0.15} strokeWidth={2} />
+                        </RadarChart>
+                      </ResponsiveContainer>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
-            {/* ─── Clinical Outcome Subtypes ─── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Barthel Index */}
-              {data.clinicalData.barthel.respondentCount > 0 && (
+            {/* v2.0: Outcome Cards (Barthel / ISI / Wellness) */}
+            {data?.outcomeAvg && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-linear-to-br from-teal-50 to-teal-100 rounded-xl border border-teal-200 p-5">
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 bg-teal-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
                       <Activity className="w-4 h-4 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0">
                       <p className="font-bold text-teal-800 text-sm font-[family-name:var(--font-display)]">Barthel Index</p>
-                      <p className="text-[10px] text-teal-500 mt-0.5">{data.clinicalData.barthel.respondentCount} responden (Stroke)</p>
-                      <div className="mt-3 space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-teal-600">Skor Awal</span>
-                          <span className="font-bold text-teal-800">{data.clinicalData.barthel.avgFirst.toFixed(1)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-teal-600">Skor Sekarang</span>
-                          <span className="font-bold text-teal-800">{data.clinicalData.barthel.avgCurrent.toFixed(1)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-teal-600">Peningkatan</span>
-                          <span className={`font-bold ${data.clinicalData.barthel.improvementPct > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {data.clinicalData.barthel.improvementPct > 0 ? '+' : ''}{data.clinicalData.barthel.improvementPct.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs pt-1 border-t border-teal-200">
-                          <span className="text-teal-600">Level Ketergantungan</span>
-                          <span className="font-bold text-teal-800">
-                            {data.clinicalData.barthel.avgScoreCurrent >= 60 ? 'Ringan' : data.clinicalData.barthel.avgScoreCurrent >= 40 ? 'Sedang' : 'Berat'}
-                          </span>
-                        </div>
+                      <p className="text-2xl font-extrabold text-teal-700 mt-1 font-[family-name:var(--font-display)]">
+                        {data.outcomeAvg.barthelIndex.toFixed(1)}
+                      </p>
+                      <p className="text-teal-600 text-[11px] mt-0.5">Rata-rata skor kemampuan aktivitas harian (0-100)</p>
+                      <div className="mt-2 h-1.5 bg-teal-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-teal-600 rounded-full" style={{ width: `${data.outcomeAvg.barthelIndex}%` }} />
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* ISI — Insomnia Severity Index */}
-              {data.clinicalData.isi.respondentCount > 0 && (
-                <div className="bg-linear-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 p-5">
+                <div className="bg-linear-to-br from-amber-50 to-amber-100 rounded-xl border border-amber-200 p-5">
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
-                      <Moon className="w-4 h-4 text-white" />
+                    <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <AlertTriangle className="w-4 h-4 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-indigo-800 text-sm font-[family-name:var(--font-display)]">ISI (Insomnia)</p>
-                      <p className="text-[10px] text-indigo-500 mt-0.5">{data.clinicalData.isi.respondentCount} responden</p>
-                      <div className="mt-3 space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-indigo-600">Rata-rata Skor</span>
-                          <span className="font-bold text-indigo-800">{data.clinicalData.isi.avgScore.toFixed(1)} / 28</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs pt-1 border-t border-indigo-200">
-                          <span className="text-indigo-600">Severity</span>
-                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                            data.clinicalData.isi.severity === 'Tidak Ada Insomnia' ? 'bg-emerald-100 text-emerald-700'
-                            : data.clinicalData.isi.severity === 'Subklinis' ? 'bg-amber-100 text-amber-700'
-                            : data.clinicalData.isi.severity === 'Sedang' ? 'bg-orange-100 text-orange-700'
-                            : 'bg-red-100 text-red-700'
-                          }`}>
-                            {data.clinicalData.isi.severity}
-                          </span>
-                        </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-amber-800 text-sm font-[family-name:var(--font-display)]">ISI Score</p>
+                      <p className="text-2xl font-extrabold text-amber-700 mt-1 font-[family-name:var(--font-display)]">
+                        {data.outcomeAvg.isiScore.toFixed(1)}
+                      </p>
+                      <p className="text-amber-600 text-[11px] mt-0.5">Insomnia Severity Index (0-28)</p>
+                      <div className="mt-2 h-1.5 bg-amber-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(data.outcomeAvg.isiScore / 28) * 100}%` }} />
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* WHOQOL-BREF — Wellness */}
-              {data.clinicalData.wellness.respondentCount > 0 && (
-                <div className="bg-linear-to-br from-rose-50 to-rose-100 rounded-xl border border-rose-200 p-5">
+                <div className="bg-linear-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200 p-5">
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-rose-500 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-9 h-9 bg-emerald-500 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
                       <Heart className="w-4 h-4 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-rose-800 text-sm font-[family-name:var(--font-display)]">WHOQOL-BREF</p>
-                      <p className="text-[10px] text-rose-500 mt-0.5">{data.clinicalData.wellness.respondentCount} responden (Wellness)</p>
-                      <div className="mt-3 space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-rose-600">Rata-rata Skor</span>
-                          <span className="font-bold text-rose-800">{data.clinicalData.wellness.avgScore.toFixed(1)} / 5</span>
-                        </div>
-                        <div className="w-full bg-rose-200/40 rounded-full h-2 overflow-hidden mt-1">
-                          <div className="bg-rose-500 rounded-full h-2 transition-all" style={{ width: `${(data.clinicalData.wellness.avgScore / 5) * 100}%` }} />
-                        </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-emerald-800 text-sm font-[family-name:var(--font-display)]">Wellness Score</p>
+                      <p className="text-2xl font-extrabold text-emerald-700 mt-1 font-[family-name:var(--font-display)]">
+                        {data.outcomeAvg.wellnessScore.toFixed(1)}
+                      </p>
+                      <p className="text-emerald-600 text-[11px] mt-0.5">WHOQOL-BREF wellness (1-5)</p>
+                      <div className="mt-2 h-1.5 bg-emerald-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(data.outcomeAvg.wellnessScore / 5) * 100}%` }} />
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1546,28 +1709,6 @@ export default function DashboardPage() {
                           {fb.bestExperience}
                         </p>
                       )}
-                      {/* H1 Liked Items */}
-                      {fb.h1Liked && fb.h1Liked.length > 0 && (
-                        <div className="pl-10 flex flex-wrap gap-1.5">
-                          <ThumbsUp className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
-                          {fb.h1Liked.map((item, idx) => (
-                            <span key={idx} className="inline-flex items-center text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {/* H2 Suggested Items */}
-                      {fb.h2Suggested && fb.h2Suggested.length > 0 && (
-                        <div className="pl-10 flex flex-wrap gap-1.5">
-                          <MessageCircle className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
-                          {fb.h2Suggested.map((item, idx) => (
-                            <span key={idx} className="inline-flex items-center text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                       {(fb.suggestions || fb.improvementSuggestion) && (
                         <div className="bg-blue-50/60 rounded-lg p-3 ml-10">
                           <p className="text-xs text-blue-800 font-medium">Saran:</p>
@@ -1581,6 +1722,11 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* ═══════════════════════════════════════════════════════
+            TAB: QR CODE — delegated to QRCodeGenerator component
+        ═══════════════════════════════════════════════════════ */}
+        {activeTab === 'qrcode' && <QRCodeGenerator data={data} />}
 
         {/* ═══════════════════════════════════════════════════════
             TAB: DATA SURVEI
@@ -1802,7 +1948,7 @@ export default function DashboardPage() {
                                   {/* Expanded Detail */}
                                   <div
                                     className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                                      isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+                                      isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
                                     }`}
                                   >
                                     <div className="px-3 pb-4 pt-1">
@@ -1815,7 +1961,7 @@ export default function DashboardPage() {
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Pekerjaan</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.occupation || '-'}{s.occupation_other ? ` (${s.occupation_other})` : ''}</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.occupation || '-'}</span>
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Jenis Pasien</span>
@@ -1824,18 +1970,6 @@ export default function DashboardPage() {
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Kunjungan</span>
                                             <span className="text-xs font-medium text-slate-700">{s.visit_count || '-'}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-[11px] text-slate-400 block">Sumber Rujukan</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.referral_source || '-'}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-[11px] text-slate-400 block">Pendapatan</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.income_range || '-'}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-[11px] text-slate-400 block">Kondisi Lainnya</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.condition_type_other || '-'}</span>
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Herbal</span>
@@ -1851,15 +1985,7 @@ export default function DashboardPage() {
                                           </div>
                                           <div>
                                             <span className="text-[11px] text-slate-400 block">Sudah Rekomendasi</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.has_recommended || '-'}{s.recommendation_count ? ` (${s.recommendation_count})` : ''}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-[11px] text-slate-400 block">WTP Harga</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.wtp_cost_today ? `Rp ${s.wtp_cost_today.toLocaleString('id-ID')}` : '-'}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-[11px] text-slate-400 block">WTP Max</span>
-                                            <span className="text-xs font-medium text-slate-700">{s.wtp_max_acceptable || '-'}</span>
+                                            <span className="text-xs font-medium text-slate-700">{s.has_recommended || '-'}</span>
                                           </div>
                                         </div>
 
@@ -1913,57 +2039,125 @@ export default function DashboardPage() {
                                           </div>
                                         )}
 
-                                        {/* H1/H2 Liked & Suggested */}
-                                        {(s.h1_liked && s.h1_liked.length > 0) && (
-                                          <div className="border-t border-slate-200 pt-3">
-                                            <span className="text-[11px] text-teal-600 font-semibold block mb-1">H1 Disukai:</span>
-                                            <div className="flex flex-wrap gap-1">
-                                              {s.h1_liked.map((item, idx) => (
-                                                <span key={idx} className="text-[10px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-200">{item}</span>
-                                              ))}
-                                            </div>
-                                            {s.h1_liked_other && <p className="text-[10px] text-slate-500 mt-1">Lainnya: {s.h1_liked_other}</p>}
+                                        {/* v2.0: H1 Liked / H2 Suggested */}
+                                        {(s.h1_liked && s.h1_liked.length > 0) || (s.h2_suggested && s.h2_suggested.length > 0) ? (
+                                          <div className="border-t border-slate-200 pt-3 space-y-2">
+                                            {s.h1_liked && s.h1_liked.length > 0 && (
+                                              <div>
+                                                <span className="text-[11px] text-teal-600 font-semibold block">H1 - Yang Disukai:</span>
+                                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                                  {s.h1_liked.map((item, idx) => (
+                                                    <span key={idx} className="text-[10px] bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 rounded-full">{item}</span>
+                                                  ))}
+                                                  {s.h1_liked_other && (
+                                                    <span className="text-[10px] bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 rounded-full">{s.h1_liked_other}</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+                                            {s.h2_suggested && s.h2_suggested.length > 0 && (
+                                              <div>
+                                                <span className="text-[11px] text-amber-600 font-semibold block">H2 - Yang Disarankan:</span>
+                                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                                  {s.h2_suggested.map((item, idx) => (
+                                                    <span key={idx} className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{item}</span>
+                                                  ))}
+                                                  {s.h2_suggested_other && (
+                                                    <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{s.h2_suggested_other}</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
                                           </div>
-                                        )}
-                                        {(s.h2_suggested && s.h2_suggested.length > 0) && (
+                                        ) : null}
+
+                                        {/* v2.0: Clarity D1-D4 */}
+                                        {(s.info_acupuncture_support || s.info_understanding || s.info_sufficient || s.info_comfortable_asking) && (
                                           <div className="border-t border-slate-200 pt-3">
-                                            <span className="text-[11px] text-amber-600 font-semibold block mb-1">H2 Disarankan:</span>
-                                            <div className="flex flex-wrap gap-1">
-                                              {s.h2_suggested.map((item, idx) => (
-                                                <span key={idx} className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">{item}</span>
+                                            <span className="text-[11px] text-slate-400 block mb-2">Clarity of Role (D1-D4)</span>
+                                            <div className="flex flex-wrap gap-2">
+                                              {[
+                                                { label: 'D1 Dukungan', value: s.info_acupuncture_support },
+                                                { label: 'D2 Pemahaman', value: s.info_understanding },
+                                                { label: 'D3 Kecukupan', value: s.info_sufficient },
+                                                { label: 'D4 Nyaman', value: s.info_comfortable_asking },
+                                              ].map((dim) => (
+                                                <span
+                                                  key={dim.label}
+                                                  className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${
+                                                    dim.value !== null && dim.value >= 4
+                                                      ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                                                      : dim.value !== null && dim.value >= 3
+                                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                                  }`}
+                                                >
+                                                  {dim.label}: {dim.value ?? '-'}
+                                                </span>
                                               ))}
                                             </div>
-                                            {s.h2_suggested_other && <p className="text-[10px] text-slate-500 mt-1">Lainnya: {s.h2_suggested_other}</p>}
                                           </div>
                                         )}
 
-                                        {/* Clarity D1-D4 Scores */}
-                                        {(s.d1_clarity_role || s.d2_clarity_explanation || s.d3_clarity_comfortable || s.d4_clarity_specialist) && (
+                                        {/* v2.0: Spiritual F1-F9 */}
+                                        {(s.spiritual_salam_doa || s.spiritual_islam_respect || s.spiritual_facility || s.spiritual_healing || s.spiritual_support || s.f6_doa_kesembuhan || s.f7_keluarga_support || s.f8_keikhlasan || s.f9_kedekatan_tuhan) && (
                                           <div className="border-t border-slate-200 pt-3">
-                                            <span className="text-[11px] text-violet-600 font-semibold block mb-1">Clarity (D1-D4):</span>
-                                            <div className="flex flex-wrap gap-1">
-                                              {s.d1_clarity_role !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D1: {s.d1_clarity_role}</span>}
-                                              {s.d2_clarity_explanation !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D2: {s.d2_clarity_explanation}</span>}
-                                              {s.d3_clarity_comfortable !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D3: {s.d3_clarity_comfortable}</span>}
-                                              {s.d4_clarity_specialist !== null && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">D4: {s.d4_clarity_specialist}</span>}
+                                            <span className="text-[11px] text-slate-400 block mb-2">Spiritual (F1-F9)</span>
+                                            <div className="flex flex-wrap gap-2">
+                                              {[
+                                                { label: 'F1 Salam Doa', value: s.spiritual_salam_doa },
+                                                { label: 'F2 Respek Islam', value: s.spiritual_islam_respect },
+                                                { label: 'F3 Fasilitas', value: s.spiritual_facility },
+                                                { label: 'F4 Healing', value: s.spiritual_healing },
+                                                { label: 'F5 Support', value: s.spiritual_support },
+                                                { label: 'F6 Doa Kesembuhan', value: s.f6_doa_kesembuhan },
+                                                { label: 'F7 Keluarga', value: s.f7_keluarga_support },
+                                                { label: 'F8 Keikhlasan', value: s.f8_keikhlasan },
+                                                { label: 'F9 Kedekatan Tuhan', value: s.f9_kedekatan_tuhan },
+                                              ].map((dim) => (
+                                                <span
+                                                  key={dim.label}
+                                                  className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${
+                                                    dim.value !== null && dim.value >= 4
+                                                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                      : dim.value !== null && dim.value >= 3
+                                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                                  }`}
+                                                >
+                                                  {dim.label}: {dim.value ?? '-'}
+                                                </span>
+                                              ))}
                                             </div>
                                           </div>
                                         )}
 
-                                        {/* Spiritual F1-F9 Scores */}
-                                        {(s.f1_adab_islami || s.f2_gender_concordance || s.f6_spiritual_activation) && (
+                                        {/* v2.0: Herbal scores */}
+                                        {(s.herb_explanation || s.herb_usage_guide || s.herb_safety_trust || s.herb_availability || s.herb_affordability || s.herb_pharmacist) && (
                                           <div className="border-t border-slate-200 pt-3">
-                                            <span className="text-[11px] text-blue-600 font-semibold block mb-1">Spiritual (F1-F9):</span>
-                                            <div className="flex flex-wrap gap-1">
-                                              {s.f1_adab_islami !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F1: {s.f1_adab_islami}</span>}
-                                              {s.f2_gender_concordance !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F2: {s.f2_gender_concordance}</span>}
-                                              {s.f3_prayer_accommodation !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F3: {s.f3_prayer_accommodation}</span>}
-                                              {s.f4_halal_assurance !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F4: {s.f4_halal_assurance}</span>}
-                                              {s.f5_tibb_nabawi !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F5: {s.f5_tibb_nabawi}</span>}
-                                              {s.f6_spiritual_activation !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F6: {s.f6_spiritual_activation}</span>}
-                                              {s.f7_holistic_peace !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F7: {s.f7_holistic_peace}</span>}
-                                              {s.f8_spiritual_communication !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F8: {s.f8_spiritual_communication}</span>}
-                                              {s.f9_reverse_coded !== null && <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">F9*: {s.f9_reverse_coded}</span>}
+                                            <span className="text-[11px] text-slate-400 block mb-2">Herbal Service</span>
+                                            <div className="flex flex-wrap gap-2">
+                                              {[
+                                                { label: 'Penjelasan', value: s.herb_explanation },
+                                                { label: 'Panduan', value: s.herb_usage_guide },
+                                                { label: 'Kepercayaan', value: s.herb_safety_trust },
+                                                { label: 'Ketersediaan', value: s.herb_availability },
+                                                { label: 'Terjangkau', value: s.herb_affordability },
+                                                { label: 'Apoteker', value: s.herb_pharmacist },
+                                              ].map((dim) => (
+                                                <span
+                                                  key={dim.label}
+                                                  className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${
+                                                    dim.value !== null && dim.value >= 4
+                                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                      : dim.value !== null && dim.value >= 3
+                                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                                  }`}
+                                                >
+                                                  {dim.label}: {dim.value ?? '-'}
+                                                </span>
+                                              ))}
                                             </div>
                                           </div>
                                         )}
