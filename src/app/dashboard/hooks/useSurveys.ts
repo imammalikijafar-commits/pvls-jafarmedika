@@ -21,7 +21,7 @@ export interface SurveyRow {
   testimonial: string | null
   education: string | null
   occupation: string | null
-  patient_type: string | null
+  payment_type: string | null
   visit_count: string | null
   condition_change: string | null
   herbal_prescribed: boolean | null
@@ -73,17 +73,15 @@ export interface SurveyRow {
   wellness_1: number | null
   wellness_2: number | null
   wellness_3: number | null
-  // Spiritual 9 Dimensions (Bagian F) — v2.0.0 FINAL
-  f1_adab_islami: number | null
-  f2_gender_concordance: number | null
-  f3_prayer_accommodation: number | null
-  f4_halal_assurance: number | null
-  f5_tibb_nabawi: number | null
-  f6_spiritual_activation: number | null
-  f7_holistic_peace: number | null
-  f8_spiritual_communication: number | null
-  f9_reverse_coded: number | null
-  wtp_price_increase: number | null
+  // Spiritual 8 Dimensions (Bagian F) — v2.1
+  f1_halal_assurance: number | null
+  f2_tibb_nabawi: number | null
+  f3_spiritual_activation: number | null
+  f4_holistic_peace: number | null
+  f5_spiritual_communication: number | null
+  f6_tawakkal: number | null
+  f7_ridha: number | null
+  f8_reverse_coded: number | null
   wtp_cost_today: number | null
   wtp_increase_20: string | null
   wtp_package_interest: string | null

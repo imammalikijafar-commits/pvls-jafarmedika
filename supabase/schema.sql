@@ -1,11 +1,15 @@
 -- ============================================
 -- DPEMS Database Schema
--- Version: 2.0.0 FINAL (Clean — No Legacy)
+-- Version: 2.1 (Kuesioner Revisi Komprehensif)
 -- Kuesioner Final: 9 Sections (A-I)
--- Exploratory Spiritual Scale: F1-F9 (clean, no backward compat)
+-- Exploratory Spiritual Scale: F1-F8 (8 dimensi)
 -- Compatible with: Next.js 16 + Supabase + TypeScript
 -- Author: Imam Maliki
 -- Changelog:
+--   v2.1 - Spiritual restructure: 9D → 8D (F2 gender → A2b, F3 prayer → B2.5,
+--           F1 adab removed, F6 tawakkal + F7 ridha added).
+--           Add A2b gender_preference, rename patient_type → payment_type,
+--           add payment_type_other. SERVQUAL B2: 4→5 items. Remove wtp_price_increase.
 --   v2.0.0 FINAL - Clean: Remove all legacy spiritual & adjuvant columns.
 --                 Use F1-F9 pure, D1-D4 pure. Add WTP (I1-I4), G4/G5 loyalty,
 --                 A5 income, condition_type_other, occupation_other.
@@ -53,22 +57,25 @@ CREATE TABLE IF NOT EXISTS surveys (
     unit_id UUID REFERENCES units(id) ON DELETE CASCADE,
 
     -- ============================================
-    -- BAGIAN A: Demographics (11 items)
+    -- BAGIAN A: Demographics (12 items)
     -- ============================================
     age_range VARCHAR(20),
     gender VARCHAR(10),
+    gender_preference VARCHAR(30),          -- A2b: Ya / Tidak / Tidak ada preferensi
     education VARCHAR(50),
     occupation VARCHAR(50),
     occupation_other TEXT,                  -- A4 Lainnya
     income_range VARCHAR(50),               -- A5
-    patient_type VARCHAR(50),               -- A6
+    payment_type VARCHAR(50),               -- A6: Jenis pembayaran
+    payment_type_other TEXT,                -- A6 Lainnya
     condition_type VARCHAR(100),            -- A7
     condition_type_other TEXT,              -- A7 Lainnya
     visit_count VARCHAR(50),                -- A8
     referral_source VARCHAR(100),           -- A9
 
     -- ============================================
-    -- BAGIAN B: SERVQUAL Dimensions (21 items → 5 averages)
+    -- BAGIAN B: SERVQUAL Dimensions (22 items -> 5 averages)
+    -- B1: 5 items, B2: 5 items, B3-B5: 4 items each
     -- ============================================
     tangibles FLOAT CHECK (tangibles >= 1 AND tangibles <= 5),
     reliability FLOAT CHECK (reliability >= 1 AND reliability <= 5),
@@ -103,7 +110,7 @@ CREATE TABLE IF NOT EXISTS surveys (
     pain_level_after INT CHECK (pain_level_after >= 0 AND pain_level_after <= 10),
     condition_change VARCHAR(50),
 
-    -- E2: Barthel Index (Stroke) — 10 activities × 2 timepoints
+    -- E2: Barthel Index (Stroke) — 10 activities x 2 timepoints
     barthel_eat_first INT DEFAULT 0, barthel_eat_current INT DEFAULT 0,
     barthel_bath_first INT DEFAULT 0, barthel_bath_current INT DEFAULT 0,
     barthel_groom_first INT DEFAULT 0, barthel_groom_current INT DEFAULT 0,
@@ -130,28 +137,27 @@ CREATE TABLE IF NOT EXISTS surveys (
     wellness_3 FLOAT CHECK (wellness_3 >= 1 AND wellness_3 <= 5),
 
     -- ============================================
-    -- BAGIAN F: Spiritual & Holistik (9 items)
-    -- Exploratory Scale — 8 dimensi + 1 reverse-coded
-    -- F9 reverse-coded: 1→5, 2→4, 3→3, 4→2, 5→1
+    -- BAGIAN F: Spiritual & Holistik (8 items) v2.1
+    -- Exploratory Scale — 7 dimensi + 1 reverse-coded
+    -- F8 reverse-coded: 1->5, 2->4, 3->3, 4->2, 5->1
+    -- F1-F5 renumbered from v2.0 F4-F8; F6-F7 new (tawakkal, ridha)
     -- ============================================
-    f1_adab_islami FLOAT CHECK (f1_adab_islami >= 1 AND f1_adab_islami <= 5),
-    f2_gender_concordance FLOAT CHECK (f2_gender_concordance >= 1 AND f2_gender_concordance <= 5),
-    f3_prayer_accommodation FLOAT CHECK (f3_prayer_accommodation >= 1 AND f3_prayer_accommodation <= 5),
-    f4_halal_assurance FLOAT CHECK (f4_halal_assurance >= 1 AND f4_halal_assurance <= 5),
-    f5_tibb_nabawi FLOAT CHECK (f5_tibb_nabawi >= 1 AND f5_tibb_nabawi <= 5),
-    f6_spiritual_activation FLOAT CHECK (f6_spiritual_activation >= 1 AND f6_spiritual_activation <= 5),
-    f7_holistic_peace FLOAT CHECK (f7_holistic_peace >= 1 AND f7_holistic_peace <= 5),
-    f8_spiritual_communication FLOAT CHECK (f8_spiritual_communication >= 1 AND f8_spiritual_communication <= 5),
-    f9_reverse_coded FLOAT CHECK (f9_reverse_coded >= 1 AND f9_reverse_coded <= 5),
+    f1_halal_assurance FLOAT CHECK (f1_halal_assurance >= 1 AND f1_halal_assurance <= 5),
+    f2_tibb_nabawi FLOAT CHECK (f2_tibb_nabawi >= 1 AND f2_tibb_nabawi <= 5),
+    f3_spiritual_activation FLOAT CHECK (f3_spiritual_activation >= 1 AND f3_spiritual_activation <= 5),
+    f4_holistic_peace FLOAT CHECK (f4_holistic_peace >= 1 AND f4_holistic_peace <= 5),
+    f5_spiritual_communication FLOAT CHECK (f5_spiritual_communication >= 1 AND f5_spiritual_communication <= 5),
+    f6_tawakkal FLOAT CHECK (f6_tawakkal >= 1 AND f6_tawakkal <= 5),
+    f7_ridha FLOAT CHECK (f7_ridha >= 1 AND f7_ridha <= 5),
+    f8_reverse_coded FLOAT CHECK (f8_reverse_coded >= 1 AND f8_reverse_coded <= 5),
 
     -- ============================================
-    -- BAGIAN G: NPS & Loyalty (5 items)
+    -- BAGIAN G: NPS & Loyalty (4 items)
     -- ============================================
     nps_score INT CHECK (nps_score >= 0 AND nps_score <= 10),
     visit_plan VARCHAR(100),
     has_recommended VARCHAR(50),
     recommendation_count VARCHAR(50),        -- G4
-    wtp_price_increase INT CHECK (wtp_price_increase >= 0 AND wtp_price_increase <= 10), -- G5
 
     -- ============================================
     -- BAGIAN H: Feedback / Masukan
@@ -241,7 +247,7 @@ BEGIN
     new_pain_reduction := CASE
         WHEN NEW.pain_level_before IS NOT NULL AND NEW.pain_level_after IS NOT NULL
              AND NEW.pain_level_before > 0
-        THEN ROUND(((NEW.pain_level_before - NEW.pain_level_after)::float / NEW.pain_level_before) * 100, 1)
+        THEN ROUND(((NEW.pain_level_before - NEW.pain_level_after)::numeric / NEW.pain_level_before) * 100, 1)
         ELSE NULL
     END;
 
@@ -270,13 +276,18 @@ BEGIN
         passives_count = survey_aggregations.passives_count + new_passive,
         detractors_count = survey_aggregations.detractors_count + new_detractor,
         nps_score = CASE
-            WHEN (survey_aggregations.promoters_count + new_promoter + survey_aggregations.detractors_count + new_detractor) > 0
-            THEN ((survey_aggregations.promoters_count + new_promoter - survey_aggregations.detractors_count - new_detractor)::float / (survey_aggregations.total_responses + 1)) * 100
+            WHEN (survey_aggregations.promoters_count + new_promoter +
+                  survey_aggregations.detractors_count + new_detractor) > 0
+            THEN ((survey_aggregations.promoters_count + new_promoter -
+                   survey_aggregations.detractors_count - new_detractor)::numeric /
+                   (survey_aggregations.total_responses + 1)) * 100
             ELSE NULL
         END,
         avg_pain_reduction_pct = CASE
             WHEN new_pain_reduction IS NOT NULL
-            THEN COALESCE(survey_aggregations.avg_pain_reduction_pct, 0) * survey_aggregations.total_responses / (survey_aggregations.total_responses + 1) + new_pain_reduction / (survey_aggregations.total_responses + 1)
+            THEN COALESCE(survey_aggregations.avg_pain_reduction_pct, 0) *
+                 survey_aggregations.total_responses / (survey_aggregations.total_responses + 1)
+                 + new_pain_reduction / (survey_aggregations.total_responses + 1)
             ELSE survey_aggregations.avg_pain_reduction_pct
         END;
 
@@ -331,130 +342,11 @@ ALTER TABLE units ENABLE ROW LEVEL SECURITY;
 ALTER TABLE survey_aggregations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alerts ENABLE ROW LEVEL SECURITY;
 
+-- Units: public SELECT (needed for QR code validation on landing page)
 CREATE POLICY "units_select_public" ON units FOR SELECT USING (true);
+-- Surveys: public INSERT (patients submit via anon key), SELECT restricted to service_role
 CREATE POLICY "surveys_insert_public" ON surveys FOR INSERT WITH CHECK (true);
-CREATE POLICY "surveys_select_public" ON surveys FOR SELECT USING (true);
-CREATE POLICY "aggregations_select_public" ON survey_aggregations FOR SELECT USING (true);
-CREATE POLICY "alerts_select_public" ON alerts FOR SELECT USING (true);
-
--- ============================================
--- DASHBOARD AGGREGATION FUNCTION v2.0.0
--- get_dashboard_data(period_days INT)
--- F9 reverse-coded: 6 - f9_reverse_coded per respondent
--- ============================================
-
-CREATE OR REPLACE FUNCTION get_dashboard_data(period_days INT DEFAULT 30)
-RETURNS JSONB AS $$
-DECLARE
-    result JSONB;
-    start_date DATE;
-BEGIN
-    start_date := CURRENT_DATE - (period_days || ' days')::INTERVAL;
-
-    SELECT jsonb_build_object(
-        'period', period_days,
-        'generated_at', NOW(),
-        'totalSurveys', (SELECT COUNT(*) FROM surveys WHERE submitted_at >= start_date),
-        'responseRate', 85.5,
-        'servqual', jsonb_build_object(
-            'tangibles', ROUND(AVG(tangibles)::numeric, 2),
-            'reliability', ROUND(AVG(reliability)::numeric, 2),
-            'responsiveness', ROUND(AVG(responsiveness)::numeric, 2),
-            'assurance', ROUND(AVG(assurance)::numeric, 2),
-            'empathy', ROUND(AVG(empathy)::numeric, 2),
-            'overall', ROUND(AVG((COALESCE(tangibles,0) + COALESCE(reliability,0) + COALESCE(responsiveness,0) + COALESCE(assurance,0) + COALESCE(empathy,0))/5)::numeric, 2)
-        ),
-        'nps', jsonb_build_object(
-            'score', CASE
-                WHEN COUNT(*) FILTER (WHERE nps_score IS NOT NULL) > 0
-                THEN ROUND(((COUNT(*) FILTER (WHERE nps_score >= 9) - COUNT(*) FILTER (WHERE nps_score <= 6))::numeric / COUNT(*) FILTER (WHERE nps_score IS NOT NULL) * 100), 0)
-                ELSE 0
-            END,
-            'promoters', COUNT(*) FILTER (WHERE nps_score >= 9),
-            'passives', COUNT(*) FILTER (WHERE nps_score >= 7 AND nps_score <= 8),
-            'detractors', COUNT(*) FILTER (WHERE nps_score <= 6),
-            'total', COUNT(*) FILTER (WHERE nps_score IS NOT NULL)
-        ),
-        'avgPainReduction', ROUND(AVG(
-            CASE WHEN pain_level_before > 0 AND pain_level_after IS NOT NULL
-            THEN ((pain_level_before - pain_level_after)::numeric / pain_level_before * 100)
-            END
-        )::numeric, 1),
-        'overallSatisfaction', ROUND(AVG((COALESCE(tangibles,0) + COALESCE(reliability,0) + COALESCE(responsiveness,0) + COALESCE(assurance,0) + COALESCE(empathy,0))/5)::numeric, 2),
-        'spiritualAvg', jsonb_build_object(
-            'f1AdabIslami', ROUND(AVG(f1_adab_islami)::numeric, 2),
-            'f2GenderConcordance', ROUND(AVG(f2_gender_concordance)::numeric, 2),
-            'f3PrayerAccommodation', ROUND(AVG(f3_prayer_accommodation)::numeric, 2),
-            'f4HalalAssurance', ROUND(AVG(f4_halal_assurance)::numeric, 2),
-            'f5TibbNabawi', ROUND(AVG(f5_tibb_nabawi)::numeric, 2),
-            'f6SpiritualActivation', ROUND(AVG(f6_spiritual_activation)::numeric, 2),
-            'f7HolisticPeace', ROUND(AVG(f7_holistic_peace)::numeric, 2),
-            'f8SpiritualCommunication', ROUND(AVG(f8_spiritual_communication)::numeric, 2),
-            'f9ReverseCoded', ROUND(AVG(f9_reverse_coded)::numeric, 2),
-            'f9Reversed', ROUND(AVG(6 - f9_reverse_coded)::numeric, 2),
-            'overall', ROUND(AVG((
-                COALESCE(f1_adab_islami,0) + COALESCE(f2_gender_concordance,0) +
-                COALESCE(f3_prayer_accommodation,0) + COALESCE(f4_halal_assurance,0) +
-                COALESCE(f5_tibb_nabawi,0) + COALESCE(f6_spiritual_activation,0) +
-                COALESCE(f7_holistic_peace,0) + COALESCE(f8_spiritual_communication,0) +
-                COALESCE(6 - f9_reverse_coded,0)
-            ) / 9)::numeric, 2)
-        ),
-        'clarityAvg', jsonb_build_object(
-            'roleClarity', ROUND(AVG(d1_clarity_role)::numeric, 2),
-            'explanationClarity', ROUND(AVG(d2_clarity_explanation)::numeric, 2),
-            'comfortableClarity', ROUND(AVG(d3_clarity_comfortable)::numeric, 2),
-            'specialistClarity', ROUND(AVG(d4_clarity_specialist)::numeric, 2),
-            'overall', ROUND(AVG((COALESCE(d1_clarity_role,0) + COALESCE(d2_clarity_explanation,0) + COALESCE(d3_clarity_comfortable,0) + COALESCE(d4_clarity_specialist,0))/4)::numeric, 2)
-        ),
-        'herbalAvg', jsonb_build_object(
-            'prescribedPct', CASE WHEN COUNT(*) > 0 THEN ROUND((COUNT(*) FILTER (WHERE herbal_prescribed = true)::numeric / COUNT(*) * 100), 1) ELSE 0 END,
-            'prescribedCount', COUNT(*) FILTER (WHERE herbal_prescribed = true),
-            'explanation', ROUND(AVG(herb_explanation)::numeric, 2),
-            'usageGuide', ROUND(AVG(herb_usage_guide)::numeric, 2),
-            'safetyTrust', ROUND(AVG(herb_safety_trust)::numeric, 2),
-            'availability', ROUND(AVG(herb_availability)::numeric, 2),
-            'affordability', ROUND(AVG(herb_affordability)::numeric, 2),
-            'pharmacist', ROUND(AVG(herb_pharmacist)::numeric, 2)
-        ),
-        'wtpData', jsonb_build_object(
-            'avgCostToday', ROUND(AVG(wtp_cost_today)::numeric, 0),
-            'respondentCount', COUNT(*) FILTER (WHERE wtp_cost_today > 0),
-            'increase20Dist', COALESCE((
-                SELECT jsonb_object_agg(wtp_increase_20, cnt)
-                FROM (SELECT wtp_increase_20, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND wtp_increase_20 IS NOT NULL GROUP BY wtp_increase_20) t
-            ), '{}'::jsonb),
-            'packageInterestDist', COALESCE((
-                SELECT jsonb_object_agg(wtp_package_interest, cnt)
-                FROM (SELECT wtp_package_interest, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND wtp_package_interest IS NOT NULL GROUP BY wtp_package_interest) t
-            ), '{}'::jsonb),
-            'maxAcceptableDist', COALESCE((
-                SELECT jsonb_object_agg(wtp_max_acceptable, cnt)
-                FROM (SELECT wtp_max_acceptable, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND wtp_max_acceptable IS NOT NULL GROUP BY wtp_max_acceptable) t
-            ), '{}'::jsonb)
-        ),
-        'loyaltyData', jsonb_build_object(
-            'visitPlanDist', COALESCE((
-                SELECT jsonb_object_agg(visit_plan, cnt)
-                FROM (SELECT visit_plan, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND visit_plan IS NOT NULL GROUP BY visit_plan) t
-            ), '{}'::jsonb),
-            'hasRecommendedDist', COALESCE((
-                SELECT jsonb_object_agg(has_recommended, cnt)
-                FROM (SELECT has_recommended, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND has_recommended IS NOT NULL GROUP BY has_recommended) t
-            ), '{}'::jsonb)
-        ),
-        'demographics', jsonb_build_object(
-            'ageRangeDistribution', COALESCE((SELECT jsonb_object_agg(age_range, cnt) FROM (SELECT age_range, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND age_range IS NOT NULL GROUP BY age_range) t), '{}'::jsonb),
-            'genderDistribution', COALESCE((SELECT jsonb_object_agg(gender, cnt) FROM (SELECT gender, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND gender IS NOT NULL GROUP BY gender) t), '{}'::jsonb),
-            'patientTypeDistribution', COALESCE((SELECT jsonb_object_agg(patient_type, cnt) FROM (SELECT patient_type, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND patient_type IS NOT NULL GROUP BY patient_type) t), '{}'::jsonb),
-            'topTreatments', COALESCE((SELECT jsonb_agg(jsonb_build_object('name', condition_type, 'count', cnt) ORDER BY cnt DESC) FROM (SELECT condition_type, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date AND condition_type IS NOT NULL GROUP BY condition_type ORDER BY cnt DESC LIMIT 5) t), '[]'::jsonb)
-        ),
-        'trendData', COALESCE((SELECT jsonb_agg(jsonb_build_object('date', date, 'count', cnt) ORDER BY date) FROM (SELECT DATE(submitted_at) as date, COUNT(*) as cnt FROM surveys WHERE submitted_at >= start_date GROUP BY DATE(submitted_at)) t), '[]'::jsonb)
-    )
-    INTO result
-    FROM surveys
-    WHERE submitted_at >= start_date;
-
-    RETURN result;
-END;
-$$ LANGUAGE plpgsql;
+CREATE POLICY "surveys_select_service_role" ON surveys FOR SELECT USING (auth.role() = 'service_role');
+-- Aggregations & alerts: restricted to service_role (patient health data)
+CREATE POLICY "aggregations_select_service_role" ON survey_aggregations FOR SELECT USING (auth.role() = 'service_role');
+CREATE POLICY "alerts_select_service_role" ON alerts FOR SELECT USING (auth.role() = 'service_role');

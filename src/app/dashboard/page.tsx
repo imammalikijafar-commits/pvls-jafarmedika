@@ -65,20 +65,19 @@ export default function DashboardPage() {
     { name: 'Detractors', value: data.nps.detractors, color: '#dc2626' },
   ] : []
 
-  // v2.0 FINAL: Spiritual 9 Dimensions (F1-F9) — primary, no legacy fallback
-  const spiritual9Data = data?.spiritual9Avg ? [
-    { dimension: 'F1 Adab Islami', score: data.spiritual9Avg.f1AdabIslami },
-    { dimension: 'F2 Gender Concord.', score: data.spiritual9Avg.f2GenderConcordance },
-    { dimension: 'F3 Prayer Accom.', score: data.spiritual9Avg.f3PrayerAccommodation },
-    { dimension: 'F4 Halal Assurance', score: data.spiritual9Avg.f4HalalAssurance },
-    { dimension: 'F5 Tibb Nabawi', score: data.spiritual9Avg.f5TibbNabawi },
-    { dimension: 'F6 Spiritual Act.', score: data.spiritual9Avg.f6SpiritualActivation },
-    { dimension: 'F7 Holistic Peace', score: data.spiritual9Avg.f7HolisticPeace },
-    { dimension: 'F8 Spiritual Comm.', score: data.spiritual9Avg.f8SpiritualCommunication },
-    { dimension: 'F9 (reversed)', score: data.spiritual9Avg.f9Reversed },
+  // v2.1: Spiritual 8 Dimensions (F1-F8)
+  const spiritual8Data = data?.spiritual8Avg ? [
+    { dimension: 'F1 Halal Assurance', score: data.spiritual8Avg.f1HalalAssurance },
+    { dimension: 'F2 Tibb Nabawi', score: data.spiritual8Avg.f2TibbNabawi },
+    { dimension: 'F3 Spiritual Activation', score: data.spiritual8Avg.f3SpiritualActivation },
+    { dimension: 'F4 Holistic Peace', score: data.spiritual8Avg.f4HolisticPeace },
+    { dimension: 'F5 Spiritual Communication', score: data.spiritual8Avg.f5SpiritualCommunication },
+    { dimension: 'F6 Tawakkal', score: data.spiritual8Avg.f6Tawakkal },
+    { dimension: 'F7 Ridha', score: data.spiritual8Avg.f7Ridha },
+    { dimension: 'F8 (reversed)', score: data.spiritual8Avg.f8Reversed },
   ] : []
 
-  // v2.0 FINAL: Clarity of Role (D1-D4)
+  // v2.1: Clarity of Role (D1-D4)
   const clarityData = data?.clarityAvg ? [
     { dimension: 'D1 Pemahaman Peran Pendukung', score: data.clarityAvg.d1ClarityRole },
     { dimension: 'D2 Penjelasan Dokter', score: data.clarityAvg.d2ClarityExplanation },
@@ -86,7 +85,7 @@ export default function DashboardPage() {
     { dimension: 'D4 Kembali ke Spesialis', score: data.clarityAvg.d4ClaritySpecialist },
   ] : []
 
-  // v2.0: Herb Service Data
+  // v2.1: Herb Service Data
   const herbData = data?.herbAvg ? [
     { dimension: 'Penjelasan', score: data.herbAvg.explanation },
     { dimension: 'Panduan Pemakaian', score: data.herbAvg.usageGuide },
@@ -478,16 +477,16 @@ export default function DashboardPage() {
                   <div className="min-w-0">
                     <p className="font-bold text-blue-800 text-sm font-[family-name:var(--font-display)]">Spiritual Wellness</p>
                     <div className="mt-2 space-y-1">
-                      {spiritual9Data.slice(0, 5).map((s) => (
+                      {spiritual8Data.slice(0, 5).map((s) => (
                         <div key={s.dimension} className="flex items-center justify-between text-[11px]">
                           <span className="text-blue-600">{s.dimension}</span>
                           <span className="font-bold text-blue-700">{s.score.toFixed(2)}/5</span>
                         </div>
                       ))}
                     </div>
-                    {spiritual9Data.length > 0 && (
+                    {spiritual8Data.length > 0 && (
                     <p className="text-blue-500 text-[11px] mt-1">
-                      Rata-rata: {(spiritual9Data.reduce((sum, s) => sum + s.score, 0) / spiritual9Data.length).toFixed(2)}/5
+                      Rata-rata: {(spiritual8Data.reduce((sum, s) => sum + s.score, 0) / spiritual8Data.length).toFixed(2)}/5
                     </p>
                     )}
                   </div>
@@ -495,7 +494,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* v2.0: Clinical Outcome Cards — Barthel, ISI, Wellness */}
+            {/* v2.1: Clinical Outcome Cards — Barthel, ISI, Wellness */}
             {data?.clinicalData && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Barthel Index */}
@@ -584,33 +583,33 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* v2.0: Spiritual 9D + Clarity + Loyalty + WTP */}
+            {/* v2.1: Spiritual 8D + Clarity + Loyalty + WTP */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Spiritual 9D Radar */}
-              {spiritual9Data.length > 0 && (
+              {/* Spiritual 8D Radar */}
+              {spiritual8Data.length > 0 && (
                 <div className="bg-white rounded-xl border border-slate-200 p-5">
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 font-[family-name:var(--font-display)]">
                     <Shield className="w-4 h-4 text-blue-600" />
-                    Spiritual 9 Dimensions (F1-F9)
+                    Spiritual 8 Dimensions (F1-F8)
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Rata-rata skor spiritual pasien (1-5)</p>
                   <div className="h-72 mt-3">
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={spiritual9Data} cx="50%" cy="50%" outerRadius="75%">
+                      <RadarChart data={spiritual8Data} cx="50%" cy="50%" outerRadius="75%">
                         <PolarGrid stroke="#e2e8f0" />
                         <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10 }} stroke="#64748b" />
                         <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 9 }} stroke="#94a3b8" />
                         <Radar name="Skor" dataKey="score" stroke={BLUE} fill={BLUE} fillOpacity={0.15} strokeWidth={2} />
-                        {data?.spiritual9Avg && (
-                          <Radar name="F9 (reversed)" dataKey="score" stroke={VIOLET} fill={VIOLET} fillOpacity={0.05} strokeWidth={1} />
+                        {data?.spiritual8Avg && (
+                          <Radar name="F8 (reversed)" dataKey="score" stroke={VIOLET} fill={VIOLET} fillOpacity={0.05} strokeWidth={1} />
                         )}
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
-                  {data?.spiritual9Avg && (
+                  {data?.spiritual8Avg && (
                     <div className="mt-2 flex items-center gap-2 justify-center">
                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: VIOLET }} />
-                      <span className="text-[11px] text-slate-500">F9 Kedekatan Tuhan (reverse-coded): {data.spiritual9Avg.f9Reversed.toFixed(2)}/5</span>
+                      <span className="text-[11px] text-slate-500">F8 Kedekatan Tuhan (reverse-coded): {data.spiritual8Avg.f8Reversed.toFixed(2)}/5</span>
                     </div>
                   )}
                 </div>
@@ -792,7 +791,7 @@ export default function DashboardPage() {
                 <p className="text-xs text-slate-500 mt-0.5">Rata-rata skor spiritual pasien (1-5)</p>
                 <div className="h-72 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={spiritual9Data} cx="50%" cy="50%" outerRadius="75%">
+                    <RadarChart data={spiritual8Data} cx="50%" cy="50%" outerRadius="75%">
                       <PolarGrid stroke="#e2e8f0" />
                       <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11 }} stroke="#64748b" />
                       <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 10 }} stroke="#94a3b8" />
@@ -889,7 +888,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* v2.0: Herbal Service Section */}
+            {/* v2.1: Herbal Service Section */}
             {herbData.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl border border-slate-200 p-5">

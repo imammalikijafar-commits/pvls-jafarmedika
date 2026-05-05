@@ -9,6 +9,22 @@ function avg(arr: (number | null)[]): number {
   return parseFloat((valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(2))
 }
 
+/** Compute dimension average from item-level columns, fallback to aggregate column */
+function dimAvg(surveys: (Survey & { units: Unit })[], itemCols: string[], fallbackCol: keyof Survey): number {
+  // Try item-level first
+  const itemAvgs = surveys
+    .map(s => {
+      const vals = itemCols
+        .map(col => (s as unknown as Record<string, unknown>)[col] as number | null)
+        .filter((v): v is number => v !== null && v !== undefined)
+      return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+    })
+    .filter((v): v is number => v !== null)
+  if (itemAvgs.length > 0) return parseFloat((itemAvgs.reduce((a, b) => a + b, 0) / itemAvgs.length).toFixed(2))
+  // Fallback to aggregate column
+  return avg(surveys.map(s => s[fallbackCol] as number | null))
+}
+
 export async function GET(request: NextRequest) {
   try {
     const period = parseInt(request.nextUrl.searchParams.get('period') || '30')
@@ -37,12 +53,22 @@ export async function GET(request: NextRequest) {
     const npsTotal = promoters + passives + detractors
     const npsScore = npsTotal > 0 ? Math.round(((promoters - detractors) / npsTotal) * 100) : 0
 
-    // --- SERVQUAL (stored as dimension averages in DB) ---
-    const tangibles = avg(surveys.map((s) => s.tangibles))
-    const reliability = avg(surveys.map((s) => s.reliability))
-    const responsiveness = avg(surveys.map((s) => s.responsiveness))
-    const assurance = avg(surveys.map((s) => s.assurance))
-    const empathy = avg(surveys.map((s) => s.empathy))
+    // SERVQUAL — prefer item-level columns (v2.2), fallback to aggregate
+    const tangibles = dimAvg(surveys,
+      ['b1_1_facility_condition', 'b1_2_equipment_modern', 'b1_3_staff_appearance', 'b1_4_facility_comfort', 'b1_5_islamic_facilities'],
+      'tangibles')
+    const reliability = dimAvg(surveys,
+      ['b2_1_service_accuracy', 'b2_2_punctuality', 'b2_3_admin_accuracy', 'b2_4_consistency', 'b2_5_prayer_accommodation'],
+      'reliability')
+    const responsiveness = dimAvg(surveys,
+      ['b3_1_quick_response', 'b3_2_staff_willingness', 'b3_3_complaint_handling', 'b3_4_waiting_time', 'b3_5_information_clarity'],
+      'responsiveness')
+    const assurance = dimAvg(surveys,
+      ['b4_1_staff_competence', 'b4_2_patient_trust', 'b4_3_safety_feeling', 'b4_4_staff_courtesy', 'b4_5_knowledge'],
+      'assurance')
+    const empathy = dimAvg(surveys,
+      ['b5_1_individual_attention', 'b5_2_understanding_needs', 'b5_3_respectful_treatment', 'b5_4_followup_visits', 'b5_5_operating_hours'],
+      'empathy')
     const overall = parseFloat(((tangibles + reliability + responsiveness + assurance + empathy) / 5).toFixed(2))
 
     const servqual = { tangibles, reliability, responsiveness, assurance, empathy, overall }
@@ -58,7 +84,7 @@ export async function GET(request: NextRequest) {
     servqualDims.sort((a, b) => a.score - b.score)
     const worstServqualDimension = { name: servqualDims[0].name, score: servqualDims[0].score }
 
-    // --- Spiritual 9D + Clarity computed below (lines ~195-235) ---
+    // --- Spiritual 8D + Clarity computed below (lines ~195-235) ---
 
     // --- Unit Performance (single unit) ---
     const unitPerformance = [{
@@ -102,7 +128,7 @@ export async function GET(request: NextRequest) {
     surveys.forEach((s) => {
       if (s.age_range) ageRangeMap.set(s.age_range, (ageRangeMap.get(s.age_range) || 0) + 1)
       if (s.gender) genderMap.set(s.gender, (genderMap.get(s.gender) || 0) + 1)
-      if (s.patient_type) patientTypeMap.set(s.patient_type, (patientTypeMap.get(s.patient_type) || 0) + 1)
+      if (s.payment_type) patientTypeMap.set(s.payment_type, (patientTypeMap.get(s.payment_type) || 0) + 1)
       if (s.condition_type) conditionMap.set(s.condition_type, (conditionMap.get(s.condition_type) || 0) + 1)
       if (s.education) educationMap.set(s.education, (educationMap.get(s.education) || 0) + 1)
     })
@@ -179,45 +205,45 @@ export async function GET(request: NextRequest) {
     const responseRate = Math.min(95, parseFloat(((totalSurveys / (totalSurveys + 45)) * 100).toFixed(1)))
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: Spiritual 9 Dimensions (F1-F9) — F9 reverse-coded
+    // v2.1: Spiritual 8 Dimensions (F1-F8) — F8 reverse-coded
     // ═══════════════════════════════════════════════════════
-    const spiritual9Fields = [
-      'f1_adab_islami', 'f2_gender_concordance', 'f3_prayer_accommodation',
-      'f4_halal_assurance', 'f5_tibb_nabawi', 'f6_spiritual_activation',
-      'f7_holistic_peace', 'f8_spiritual_communication', 'f9_reverse_coded'
+    const spiritual8Fields = [
+      'f1_halal_assurance', 'f2_tibb_nabawi', 'f3_spiritual_activation',
+      'f4_holistic_peace', 'f5_spiritual_communication', 'f6_tawakkal',
+      'f7_ridha', 'f8_reverse_coded'
     ]
-    const spiritual9Sums: Record<string, { sum: number; count: number }> = {}
-    spiritual9Fields.forEach(f => {
-      spiritual9Sums[f] = { sum: 0, count: 0 }
+    const spiritual8Sums: Record<string, { sum: number; count: number }> = {}
+    spiritual8Fields.forEach(f => {
+      spiritual8Sums[f] = { sum: 0, count: 0 }
     })
     surveys.forEach(s => {
-      spiritual9Fields.forEach(f => {
+      spiritual8Fields.forEach(f => {
         const v = (s as unknown as Record<string, unknown>)[f] as number | null
-        if (v !== null && v !== undefined) { spiritual9Sums[f].sum += v; spiritual9Sums[f].count++ }
+        if (v !== null && v !== undefined) { spiritual8Sums[f].sum += v; spiritual8Sums[f].count++ }
       })
     })
-    const avg9 = (key: string) => spiritual9Sums[key].count > 0 ? parseFloat((spiritual9Sums[key].sum / spiritual9Sums[key].count).toFixed(2)) : 0
-    const f9Reversed = spiritual9Sums['f9_reverse_coded'].count > 0 ? parseFloat((6 - spiritual9Sums['f9_reverse_coded'].sum / spiritual9Sums['f9_reverse_coded'].count).toFixed(2)) : 0
-    // Overall spiritual: average of F1-F8 raw + F9 reversed
-    const spiritual9Overall = parseFloat(((avg9('f1_adab_islami') + avg9('f2_gender_concordance') + avg9('f3_prayer_accommodation') +
-      avg9('f4_halal_assurance') + avg9('f5_tibb_nabawi') + avg9('f6_spiritual_activation') +
-      avg9('f7_holistic_peace') + avg9('f8_spiritual_communication') + f9Reversed) / 9).toFixed(2))
-    const spiritual9Avg = {
-      f1AdabIslami: avg9('f1_adab_islami'),
-      f2GenderConcordance: avg9('f2_gender_concordance'),
-      f3PrayerAccommodation: avg9('f3_prayer_accommodation'),
-      f4HalalAssurance: avg9('f4_halal_assurance'),
-      f5TibbNabawi: avg9('f5_tibb_nabawi'),
-      f6SpiritualActivation: avg9('f6_spiritual_activation'),
-      f7HolisticPeace: avg9('f7_holistic_peace'),
-      f8SpiritualCommunication: avg9('f8_spiritual_communication'),
-      f9ReverseCoded: avg9('f9_reverse_coded'),
-      f9Reversed,
-      overall: spiritual9Overall,
+    const avg8 = (key: string) => spiritual8Sums[key].count > 0 ? parseFloat((spiritual8Sums[key].sum / spiritual8Sums[key].count).toFixed(2)) : 0
+    const f8Reversed = spiritual8Sums['f8_reverse_coded'].count > 0 ? parseFloat((6 - spiritual8Sums['f8_reverse_coded'].sum / spiritual8Sums['f8_reverse_coded'].count).toFixed(2)) : 0
+    // Overall spiritual: average of F1-F7 raw + F8 reversed
+    const spiritual8Overall = parseFloat(((avg8('f1_halal_assurance') + avg8('f2_tibb_nabawi') + avg8('f3_spiritual_activation') +
+      avg8('f4_holistic_peace') + avg8('f5_spiritual_communication') + avg8('f6_tawakkal') +
+      avg8('f7_ridha') + f8Reversed) / 8).toFixed(2))
+    const spiritual8Avg = {
+      f1HalalAssurance: avg8('f1_halal_assurance'),
+      f2TibbNabawi: avg8('f2_tibb_nabawi'),
+      f3SpiritualActivation: avg8('f3_spiritual_activation'),
+      f4HolisticPeace: avg8('f4_holistic_peace'),
+      f5SpiritualCommunication: avg8('f5_spiritual_communication'),
+      f6Tawakkal: avg8('f6_tawakkal'),
+      f7Ridha: avg8('f7_ridha'),
+      f8ReverseCoded: avg8('f8_reverse_coded'),
+      f8Reversed,
+      overall: spiritual8Overall,
+      sciScore: spiritual8Overall,  // alias: avg keseluruhan SCI (F8 sudah di-reverse)
     }
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: Clarity D1-D4
+    // v2.1: Clarity D1-D4
     // ═══════════════════════════════════════════════════════
     const clarityD1 = avg(surveys.map(s => s.d1_clarity_role))
     const clarityD2 = avg(surveys.map(s => s.d2_clarity_explanation))
@@ -233,7 +259,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: Herb Avg
+    // v2.1: Herb Avg
     // ═══════════════════════════════════════════════════════
     const herbPrescribed = surveys.filter(s => s.herbal_prescribed === true).length
     const herbAvg = {
@@ -248,7 +274,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: Clinical Outcomes
+    // v2.1: Clinical Outcomes
     // ═══════════════════════════════════════════════════════
     const barthelSurveys = surveys.filter(s => s.barthel_eat_first !== null || s.barthel_eat_current !== null)
     const barthelFields = ['eat', 'bath', 'groom', 'dress', 'toilet', 'bowel', 'bladder', 'transfer', 'mobility', 'stairs']
@@ -318,7 +344,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: Loyalty Data
+    // v2.1: Loyalty Data
     // ═══════════════════════════════════════════════════════
     const visitPlanMap = new Map<string, number>()
     const hasRecommendedMap = new Map<string, number>()
@@ -339,7 +365,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // v2.0: WTP Data
+    // v2.1: WTP Data
     // ═══════════════════════════════════════════════════════
     const wtpSurveys = surveys.filter(s => s.wtp_cost_today !== null || s.wtp_increase_20 !== null)
     const increase20Map = new Map<string, number>()
@@ -383,8 +409,8 @@ export async function GET(request: NextRequest) {
       diagnosisSatisfactionData,
       topDiagnosis,
       worstServqualDimension,
-      // v2.0 additions
-      spiritual9Avg,
+      // v2.1 additions
+      spiritual8Avg,
       clarityAvg,
       herbAvg,
       clinicalData,

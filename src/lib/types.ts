@@ -1,8 +1,8 @@
 // ============================================================
 // DPEMS Type Definitions
-// Matching Supabase Schema v2.0.0 FINAL (Clean — No Legacy)
+// Matching Supabase Schema v2.2 (SERVQUAL Item-Level + SCI Score)
 // 9 Sections (A-I): Demographics, SERVQUAL, Herbal, Clarity,
-//   Clinical, Spiritual 9D, NPS/Loyalty, Feedback, WTP
+//   Clinical, Spiritual 8D, NPS/Loyalty, Feedback, WTP
 // RSU Ja'far Medika Karanganyar
 // ===========================================================
 
@@ -41,11 +41,13 @@ export interface Survey {
   // Demographics (Bagian A)
   age_range: string | null
   gender: string | null
+  gender_preference: string | null          // A2b: Ya / Tidak / Tidak ada preferensi
   education: string | null
   occupation: string | null
   occupation_other: string | null
   income_range: string | null
-  patient_type: string | null
+  payment_type: string | null              // A6: Jenis pembayaran (was patient_type)
+  payment_type_other: string | null        // A6 Lainnya
   condition_type: string | null
   condition_type_other: string | null
   visit_count: string | null
@@ -57,6 +59,38 @@ export interface Survey {
   responsiveness: number | null
   assurance: number | null
   empathy: number | null
+
+  // SERVQUAL Item-Level (Bagian B) — 25 items untuk PLS-SEM analysis
+  // Tangibles B1
+  b1_1_facility_condition: number | null
+  b1_2_equipment_modern: number | null
+  b1_3_staff_appearance: number | null
+  b1_4_facility_comfort: number | null
+  b1_5_islamic_facilities: number | null
+  // Reliability B2
+  b2_1_service_accuracy: number | null
+  b2_2_punctuality: number | null
+  b2_3_admin_accuracy: number | null
+  b2_4_consistency: number | null
+  b2_5_prayer_accommodation: number | null  // moved from F3
+  // Responsiveness B3
+  b3_1_quick_response: number | null
+  b3_2_staff_willingness: number | null
+  b3_3_complaint_handling: number | null
+  b3_4_waiting_time: number | null
+  b3_5_information_clarity: number | null
+  // Assurance B4
+  b4_1_staff_competence: number | null
+  b4_2_patient_trust: number | null
+  b4_3_safety_feeling: number | null
+  b4_4_staff_courtesy: number | null
+  b4_5_knowledge: number | null
+  // Empathy B5
+  b5_1_individual_attention: number | null
+  b5_2_understanding_needs: number | null
+  b5_3_respectful_treatment: number | null
+  b5_4_followup_visits: number | null
+  b5_5_operating_hours: number | null
 
   // Herbal Service (Bagian C)
   herbal_prescribed: boolean | null
@@ -112,23 +146,22 @@ export interface Survey {
   wellness_2: number | null
   wellness_3: number | null
 
-  // Spiritual & Holistic 9 Dimensions (Bagian F) — F1-F9
-  f1_adab_islami: number | null
-  f2_gender_concordance: number | null
-  f3_prayer_accommodation: number | null
-  f4_halal_assurance: number | null
-  f5_tibb_nabawi: number | null
-  f6_spiritual_activation: number | null
-  f7_holistic_peace: number | null
-  f8_spiritual_communication: number | null
-  f9_reverse_coded: number | null
+  // Spiritual & Holistic 8 Dimensions (Bagian F) — F1-F8 (v2.1)
+  // F1-F5 renumbered from v2.0 F4-F8; F2(gender), F3(prayer) moved to A/B
+  f1_halal_assurance: number | null          // was f4
+  f2_tibb_nabawi: number | null              // was f5
+  f3_spiritual_activation: number | null     // was f6
+  f4_holistic_peace: number | null           // was f7
+  f5_spiritual_communication: number | null  // was f8
+  f6_tawakkal: number | null                 // NEW: Tawakkal / Spiritual Intention
+  f7_ridha: number | null                    // NEW: Acceptance / Ridha
+  f8_reverse_coded: number | null            // was f9
 
   // NPS & Loyalty (Bagian G)
   nps_score: number | null
   visit_plan: string | null
   has_recommended: string | null
   recommendation_count: string | null
-  wtp_price_increase: number | null
 
   // Feedback / Masukan (Bagian H)
   best_experience: string | null
@@ -173,6 +206,7 @@ export interface SurveyAggregation {
   detractors_count: number
   nps_score: number | null
   avg_pain_reduction_pct: number | null
+  avg_sci_score: number | null  // SCI 8 dimensi (F8 sudah di-reverse)
 }
 
 export interface Alert {
@@ -271,19 +305,19 @@ export interface DashboardData {
   topDiagnosis: TopDiagnosis | null
   worstServqualDimension: { name: string; score: number }
 
-  // v2.0 Spiritual 9 Dimensions (F1-F9) — primary spiritual data
-  spiritual9Avg: {
-    f1AdabIslami: number
-    f2GenderConcordance: number
-    f3PrayerAccommodation: number
-    f4HalalAssurance: number
-    f5TibbNabawi: number
-    f6SpiritualActivation: number
-    f7HolisticPeace: number
-    f8SpiritualCommunication: number
-    f9ReverseCoded: number
-    f9Reversed: number
+  // v2.1 Spiritual 8 Dimensions (F1-F8) — primary spiritual data
+  spiritual8Avg: {
+    f1HalalAssurance: number
+    f2TibbNabawi: number
+    f3SpiritualActivation: number
+    f4HolisticPeace: number
+    f5SpiritualCommunication: number
+    f6Tawakkal: number
+    f7Ridha: number
+    f8ReverseCoded: number
+    f8Reversed: number
     overall: number
+    sciScore: number  // avg keseluruhan SCI (sama dengan overall, alias untuk SEM)
   }
 
   // v2.0 Clarity of Role (D1-D4)

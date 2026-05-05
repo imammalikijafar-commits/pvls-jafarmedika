@@ -1,6 +1,7 @@
 // ============================================================
 // DPEMS Database Client
-// Supabase — matching Schema v2.0.0 FINAL (Kuesioner Integrative Medicine)
+// Supabase — matching Schema v2.2 (SERVQUAL Item-Level + SCI Score)
+// Lazy initialization to avoid build-time crashes
 // ============================================================
 
 import { createAdminClient } from '@/lib/supabase/server'

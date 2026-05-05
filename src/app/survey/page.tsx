@@ -201,24 +201,24 @@ export default function SurveyPage() {
       const sessionDuration = Math.round((Date.now() - sessionStart) / 1000)
 
       const tangibles = computeDimensionAverage([
-        form.b1_t1_kebersihan, form.b1_t2_steril, form.b1_t3_berbaring, form.b1_t4_suasana, form.b1_t5_ibadah
+        form.b1_1_facility_condition, form.b1_2_equipment_modern, form.b1_3_staff_appearance, form.b1_4_facility_comfort, form.b1_5_islamic_facilities
       ])
       const reliability = computeDimensionAverage([
-        form.b2_r1_tepat_waktu, form.b2_r2_hadir, form.b2_r3_terstandar, form.b2_r4_rekam_medis
+        form.b2_1_service_accuracy, form.b2_2_punctuality, form.b2_3_admin_accuracy, form.b2_4_consistency, form.b2_5_prayer_accommodation
       ])
       const responsiveness = computeDimensionAverage([
-        form.b3_c1_tunggu, form.b3_c2_respons, form.b3_c3_jelas, form.b3_c4_efek_samping
+        form.b3_1_quick_response, form.b3_2_staff_willingness, form.b3_3_complaint_handling, form.b3_4_waiting_time, form.b3_5_information_clarity
       ])
       const assurance = computeDimensionAverage([
-        form.b4_a1_kompetensi, form.b4_a2_diagnosis, form.b4_a3_aman, form.b4_a4_sertifikasi
+        form.b4_1_staff_competence, form.b4_2_patient_trust, form.b4_3_safety_feeling, form.b4_4_staff_courtesy, form.b4_5_knowledge
       ])
       const empathy = computeDimensionAverage([
-        form.b5_e1_personal, form.b5_e2_kekhawatiran, form.b5_e3_hormat, form.b5_e4_perkembangan
+        form.b5_1_individual_attention, form.b5_2_understanding_needs, form.b5_3_respectful_treatment, form.b5_4_followup_visits, form.b5_5_operating_hours
       ])
       const spiritualAvg = computeDimensionAverage([
-        form.f1_adab_islami, form.f2_gender_concordance, form.f3_prayer_accommodation,
-        form.f4_halal_assurance, form.f5_tibb_nabawi, form.f6_spiritual_activation,
-        form.f7_holistic_peace, form.f8_spiritual_communication,
+        form.f1_halal_assurance, form.f2_tibb_nabawi, form.f3_spiritual_activation,
+        form.f4_holistic_peace, form.f5_spiritual_communication, form.f6_tawakkal,
+        form.f7_ridha, form.f8_reverse_coded,
       ])
 
       const payload = {
@@ -229,13 +229,26 @@ export default function SurveyPage() {
           ? `Lainnya: ${form.occupation_other}`
           : form.occupation,
         income_range: form.income_range,
-        patient_type: form.patient_type,
+        payment_type: form.payment_type,
+        gender_preference: form.gender_preference,
+        payment_type_other: form.payment_type_other,
         condition_type: form.condition_type === 'Lainnya' && form.condition_type_other
           ? `Lainnya: ${form.condition_type_other}`
           : form.condition_type,
         visit_count: form.visit_count,
         referral_source: form.referral_source,
         tangibles, reliability, responsiveness, assurance, empathy,
+        // SERVQUAL item-level (v2.2: 25 items for PLS-SEM)
+        b1_1_facility_condition: form.b1_1_facility_condition, b1_2_equipment_modern: form.b1_2_equipment_modern,
+        b1_3_staff_appearance: form.b1_3_staff_appearance, b1_4_facility_comfort: form.b1_4_facility_comfort, b1_5_islamic_facilities: form.b1_5_islamic_facilities,
+        b2_1_service_accuracy: form.b2_1_service_accuracy, b2_2_punctuality: form.b2_2_punctuality,
+        b2_3_admin_accuracy: form.b2_3_admin_accuracy, b2_4_consistency: form.b2_4_consistency, b2_5_prayer_accommodation: form.b2_5_prayer_accommodation,
+        b3_1_quick_response: form.b3_1_quick_response, b3_2_staff_willingness: form.b3_2_staff_willingness,
+        b3_3_complaint_handling: form.b3_3_complaint_handling, b3_4_waiting_time: form.b3_4_waiting_time, b3_5_information_clarity: form.b3_5_information_clarity,
+        b4_1_staff_competence: form.b4_1_staff_competence, b4_2_patient_trust: form.b4_2_patient_trust,
+        b4_3_safety_feeling: form.b4_3_safety_feeling, b4_4_staff_courtesy: form.b4_4_staff_courtesy, b4_5_knowledge: form.b4_5_knowledge,
+        b5_1_individual_attention: form.b5_1_individual_attention, b5_2_understanding_needs: form.b5_2_understanding_needs,
+        b5_3_respectful_treatment: form.b5_3_respectful_treatment, b5_4_followup_visits: form.b5_4_followup_visits, b5_5_operating_hours: form.b5_5_operating_hours,
         herbal_prescribed: form.herbal_prescribed === 'Ya',
         herb_explanation: form.herbal_prescribed === 'Ya' ? form.c2_herb_explanation : null,
         herb_usage_guide: form.herbal_prescribed === 'Ya' ? form.c2_herb_usage_guide : null,
@@ -251,22 +264,20 @@ export default function SurveyPage() {
         pain_level_before: form.pain_level_before,
         pain_level_after: form.visit_count === 'Pertama kali (ke-1)' ? null : form.pain_level_after,
         condition_change: form.condition_change,
-        // Spiritual (9 items) — F1-F9 murni, tanpa legacy mapping
-        f1_adab_islami: form.f1_adab_islami,
-        f2_gender_concordance: form.f2_gender_concordance,
-        f3_prayer_accommodation: form.f3_prayer_accommodation,
-        f4_halal_assurance: form.f4_halal_assurance,
-        f5_tibb_nabawi: form.f5_tibb_nabawi,
-        f6_spiritual_activation: form.f6_spiritual_activation,
-        f7_holistic_peace: form.f7_holistic_peace,
-        f8_spiritual_communication: form.f8_spiritual_communication,
-        f9_reverse_coded: form.f9_reverse_coded,
-        // NPS & Loyalty (5 items)
+        // Spiritual (8 items) — F1-F8 v2.2
+        f1_halal_assurance: form.f1_halal_assurance,
+        f2_tibb_nabawi: form.f2_tibb_nabawi,
+        f3_spiritual_activation: form.f3_spiritual_activation,
+        f4_holistic_peace: form.f4_holistic_peace,
+        f5_spiritual_communication: form.f5_spiritual_communication,
+        f6_tawakkal: form.f6_tawakkal,
+        f7_ridha: form.f7_ridha,
+        f8_reverse_coded: form.f8_reverse_coded,
+        // NPS & Loyalty (4 items)
         nps_score: form.nps_score,
         visit_plan: form.visit_plan,
         has_recommended: form.has_recommended,
         recommendation_count: form.recommendation_count,
-        wtp_price_increase: form.wtp_price_increase,
         // Feedback
         best_experience: form.h1_liked.length > 0 ? form.h1_liked.join('; ') + (form.h1_liked_other ? `; Lainnya: ${form.h1_liked_other}` : '') : null,
         improvement_suggestion: form.h2_suggested.length > 0 ? form.h2_suggested.join('; ') + (form.h2_suggested_other ? `; Lainnya: ${form.h2_suggested_other}` : '') : null,
@@ -281,13 +292,13 @@ export default function SurveyPage() {
         wtp_package_interest: form.wtp_package_interest,
         wtp_max_acceptable: form.wtp_max_acceptable,
         responses_json: {
-          demographics: { age_range: form.age_range, gender: form.gender, education: form.education, occupation: form.occupation, income_range: form.income_range, patient_type: form.patient_type, condition_type: form.condition_type, visit_count: form.visit_count, referral_source: form.referral_source },
+          demographics: { age_range: form.age_range, gender: form.gender, education: form.education, occupation: form.occupation, income_range: form.income_range, payment_type: form.payment_type, condition_type: form.condition_type, visit_count: form.visit_count, referral_source: form.referral_source },
           servqual_individual: {
-            tangibles: [form.b1_t1_kebersihan, form.b1_t2_steril, form.b1_t3_berbaring, form.b1_t4_suasana, form.b1_t5_ibadah],
-            reliability: [form.b2_r1_tepat_waktu, form.b2_r2_hadir, form.b2_r3_terstandar, form.b2_r4_rekam_medis],
-            responsiveness: [form.b3_c1_tunggu, form.b3_c2_respons, form.b3_c3_jelas, form.b3_c4_efek_samping],
-            assurance: [form.b4_a1_kompetensi, form.b4_a2_diagnosis, form.b4_a3_aman, form.b4_a4_sertifikasi],
-            empathy: [form.b5_e1_personal, form.b5_e2_kekhawatiran, form.b5_e3_hormat, form.b5_e4_perkembangan],
+            tangibles: [form.b1_1_facility_condition, form.b1_2_equipment_modern, form.b1_3_staff_appearance, form.b1_4_facility_comfort, form.b1_5_islamic_facilities],
+            reliability: [form.b2_1_service_accuracy, form.b2_2_punctuality, form.b2_3_admin_accuracy, form.b2_4_consistency, form.b2_5_prayer_accommodation],
+            responsiveness: [form.b3_1_quick_response, form.b3_2_staff_willingness, form.b3_3_complaint_handling, form.b3_4_waiting_time, form.b3_5_information_clarity],
+            assurance: [form.b4_1_staff_competence, form.b4_2_patient_trust, form.b4_3_safety_feeling, form.b4_4_staff_courtesy, form.b4_5_knowledge],
+            empathy: [form.b5_1_individual_attention, form.b5_2_understanding_needs, form.b5_3_respectful_treatment, form.b5_4_followup_visits, form.b5_5_operating_hours],
           },
           servqual_averages: { tangibles, reliability, responsiveness, assurance, empathy, spiritual_average: spiritualAvg },
           clarity: { d1: form.d1_clarity_role, d2: form.d2_clarity_explanation, d3: form.d3_clarity_comfortable, d4: form.d4_clarity_specialist },
@@ -309,8 +320,8 @@ export default function SurveyPage() {
             isi: { isi_1: form.isi_1, isi_2: form.isi_2, isi_3: form.isi_3, isi_4: form.isi_4, isi_5: form.isi_5, isi_6: form.isi_6, isi_7: form.isi_7 },
             wellness: { wellness_1: form.wellness_1, wellness_2: form.wellness_2, wellness_3: form.wellness_3 },
           },
-          spiritual_individual: [form.f1_adab_islami, form.f2_gender_concordance, form.f3_prayer_accommodation, form.f4_halal_assurance, form.f5_tibb_nabawi, form.f6_spiritual_activation, form.f7_holistic_peace, form.f8_spiritual_communication, form.f9_reverse_coded],
-          loyalty: { nps_score: form.nps_score, visit_plan: form.visit_plan, has_recommended: form.has_recommended, recommendation_count: form.recommendation_count, wtp_price_increase: form.wtp_price_increase },
+          spiritual_individual: [form.f1_halal_assurance, form.f2_tibb_nabawi, form.f3_spiritual_activation, form.f4_holistic_peace, form.f5_spiritual_communication, form.f6_tawakkal, form.f7_ridha, form.f8_reverse_coded],
+          loyalty: { nps_score: form.nps_score, visit_plan: form.visit_plan, has_recommended: form.has_recommended, recommendation_count: form.recommendation_count },
           feedback: { h1_liked: form.h1_liked, h1_liked_other: form.h1_liked_other || null, h2_suggested: form.h2_suggested, h2_suggested_other: form.h2_suggested_other || null, h3_testimonial: form.testimonial || null },
           wtp: { wtp_cost_today: form.wtp_cost_today, wtp_increase_20: form.wtp_increase_20, wtp_package_interest: form.wtp_package_interest, wtp_max_acceptable: form.wtp_max_acceptable },
         },

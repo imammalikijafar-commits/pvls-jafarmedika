@@ -2,8 +2,8 @@ import { z } from 'zod'
 
 // ============================================================
 // DPEMS Zod Validators
-// Matching Supabase Schema v2.0.0 FINAL (Clean — No Legacy)
-// 9 Sections (A-I)
+// Matching Supabase Schema v2.2 (SERVQUAL Item-Level + SCI Score)
+// 9 Sections (A-I): SERVQUAL now 5×5=25 items for PLS-SEM
 // RSU Ja'far Medika Karanganyar
 // ============================================================
 
@@ -33,7 +33,8 @@ export const OCCUPATIONS = [
   'Pensiunan',
   'Lainnya',
 ] as const
-export const PATIENT_TYPES = ['Umum/Biaya Sendiri', 'Asuransi Swasta', 'Lainnya'] as const
+export const PAYMENT_TYPES = ['Umum/Biaya Sendiri', 'Asuransi Swasta', 'Lainnya'] as const
+export const GENDER_PREFERENCES = ['Ya', 'Tidak', 'Tidak ada preferensi'] as const
 export const CONDITION_TYPES = [
   'Stroke/Pasca Stroke',
   'Nyeri Sendi (Rematik/OA)',
@@ -55,8 +56,11 @@ export const INCOME_RANGES = [
   'Tidak ingin menjawab',
 ] as const
 
+// A2b: Gender practitioner preference
+// GENDER_PREFERENCES defined above
+
 // A6: Payment type
-// PATIENT_TYPES defined above
+// PAYMENT_TYPES defined above
 
 // A7: Condition type (8 options with branching)
 // CONDITION_TYPES defined above
@@ -207,10 +211,11 @@ export const H2_SUGGESTED_CATEGORIES = [
 export const demographicsSchema = z.object({
   age_range: z.string().min(1, 'Usia wajib dipilih'),
   gender: z.string().min(1, 'Jenis kelamin wajib dipilih'),
+  gender_preference: z.string().min(1, 'Preferensi gender praktisi wajib dipilih'),
   education: z.string().min(1, 'Pendidikan wajib dipilih'),
   occupation: z.string().min(1, 'Pekerjaan wajib dipilih'),
   income_range: z.string().min(1, 'Pendapatan wajib dipilih'),
-  patient_type: z.string().min(1, 'Jenis pembayaran wajib dipilih'),
+  payment_type: z.string().min(1, 'Jenis pembayaran wajib dipilih'),
   condition_type: z.string().min(1, 'Keluhan utama wajib dipilih'),
   visit_count: z.string().min(1, 'Kunjungan wajib dipilih'),
   referral_source: z.string().min(1, 'Sumber rujukan wajib dipilih'),
@@ -218,34 +223,38 @@ export const demographicsSchema = z.object({
 
 export type DemographicsData = z.infer<typeof demographicsSchema>
 
-// --- Step 1: Bagian B - SERVQUAL (5 dimensions × 4-5 questions) ---
+// --- Step 1: Bagian B - SERVQUAL v2.2 (5 dimensions × 5 questions = 25 items) ---
 export const servqualSchema = z.object({
-  // B1 Tangibles (5 questions)
-  b1_t1_kebersihan: likert5,
-  b1_t2_steril: likert5,
-  b1_t3_berbaring: likert5,
-  b1_t4_suasana: likert5,
-  b1_t5_ibadah: likert5,
-  // B2 Reliability (4 questions)
-  b2_r1_tepat_waktu: likert5,
-  b2_r2_hadir: likert5,
-  b2_r3_terstandar: likert5,
-  b2_r4_rekam_medis: likert5,
-  // B3 Responsiveness (4 questions)
-  b3_c1_tunggu: likert5,
-  b3_c2_respons: likert5,
-  b3_c3_jelas: likert5,
-  b3_c4_efek_samping: likert5,
-  // B4 Assurance (4 questions)
-  b4_a1_kompetensi: likert5,
-  b4_a2_diagnosis: likert5,
-  b4_a3_aman: likert5,
-  b4_a4_sertifikasi: likert5,
-  // B5 Empathy (4 questions)
-  b5_e1_personal: likert5,
-  b5_e2_kekhawatiran: likert5,
-  b5_e3_hormat: likert5,
-  b5_e4_perkembangan: likert5,
+  // B1 Tangibles (5 items)
+  b1_1_facility_condition: likert5,
+  b1_2_equipment_modern: likert5,
+  b1_3_staff_appearance: likert5,
+  b1_4_facility_comfort: likert5,
+  b1_5_islamic_facilities: likert5,
+  // B2 Reliability (5 items — B2.5 prayer accommodation moved from F3)
+  b2_1_service_accuracy: likert5,
+  b2_2_punctuality: likert5,
+  b2_3_admin_accuracy: likert5,
+  b2_4_consistency: likert5,
+  b2_5_prayer_accommodation: likert5,
+  // B3 Responsiveness (5 items — expanded from 4 in v2.1)
+  b3_1_quick_response: likert5,
+  b3_2_staff_willingness: likert5,
+  b3_3_complaint_handling: likert5,
+  b3_4_waiting_time: likert5,
+  b3_5_information_clarity: likert5,
+  // B4 Assurance (5 items — expanded from 4 in v2.1)
+  b4_1_staff_competence: likert5,
+  b4_2_patient_trust: likert5,
+  b4_3_safety_feeling: likert5,
+  b4_4_staff_courtesy: likert5,
+  b4_5_knowledge: likert5,
+  // B5 Empathy (5 items — expanded from 4 in v2.1)
+  b5_1_individual_attention: likert5,
+  b5_2_understanding_needs: likert5,
+  b5_3_respectful_treatment: likert5,
+  b5_4_followup_visits: likert5,
+  b5_5_operating_hours: likert5,
 })
 
 export type ServqualData = z.infer<typeof servqualSchema>
@@ -341,20 +350,19 @@ export const clinicalOutcomesSchema = z.object({
 
 export type ClinicalOutcomesData = z.infer<typeof clinicalOutcomesSchema>
 
-// --- Step 5: Bagian F - Spiritual & Holistik (9 items, F1-F9) ---
-export const spiritual9Schema = z.object({
-  f1_adab_islami: likert5,
-  f2_gender_concordance: likert5,
-  f3_prayer_accommodation: likert5,
-  f4_halal_assurance: likert5,
-  f5_tibb_nabawi: likert5,
-  f6_spiritual_activation: likert5,
-  f7_holistic_peace: likert5,
-  f8_spiritual_communication: likert5,
-  f9_reverse_coded: likert5,
+// --- Step 5: Bagian F - Spiritual & Holistik (8 items, F1-F8) v2.1 ---
+export const spiritual8Schema = z.object({
+  f1_halal_assurance: likert5,
+  f2_tibb_nabawi: likert5,
+  f3_spiritual_activation: likert5,
+  f4_holistic_peace: likert5,
+  f5_spiritual_communication: likert5,
+  f6_tawakkal: likert5,
+  f7_ridha: likert5,
+  f8_reverse_coded: likert5,
 })
 
-export type Spiritual9Data = z.infer<typeof spiritual9Schema>
+export type Spiritual8Data = z.infer<typeof spiritual8Schema>
 
 // --- Step 6: Bagian G - NPS & Loyaltas ---
 export const npsLoyaltySchema = z.object({
@@ -362,7 +370,6 @@ export const npsLoyaltySchema = z.object({
   visit_plan: z.string().min(1),
   has_recommended: z.string().min(1),
   recommendation_count: z.string().min(1),
-  wtp_price_increase: npsScore,
 })
 
 export type NpsLoyaltyData = z.infer<typeof npsLoyaltySchema>
@@ -416,22 +423,56 @@ export const fullSurveySchema = z.object({
   // Bagian A - Demographics
   age_range: z.string().nullable().optional(),
   gender: z.string().nullable().optional(),
+  gender_preference: z.string().nullable().optional(),
   education: z.string().nullable().optional(),
   occupation: z.string().nullable().optional(),
   occupation_other: z.string().nullable().optional(),
   income_range: z.string().nullable().optional(),
-  patient_type: z.string().nullable().optional(),
+  payment_type: z.string().nullable().optional(),
+  payment_type_other: z.string().nullable().optional(),
   condition_type: z.string().nullable().optional(),
   condition_type_other: z.string().nullable().optional(),
   visit_count: z.string().nullable().optional(),
   referral_source: z.string().nullable().optional(),
 
-  // Bagian B - SERVQUAL averages (computed client-side)
+  // Bagian B - SERVQUAL aggregate averages (computed client-side, overwritten by trigger)
   tangibles: z.number().min(1).max(5).nullable().optional(),
   reliability: z.number().min(1).max(5).nullable().optional(),
   responsiveness: z.number().min(1).max(5).nullable().optional(),
   assurance: z.number().min(1).max(5).nullable().optional(),
   empathy: z.number().min(1).max(5).nullable().optional(),
+
+  // Bagian B - SERVQUAL item-level (v2.2: 25 items for PLS-SEM analysis)
+  // Tangibles B1
+  b1_1_facility_condition: z.number().min(1).max(5).nullable().optional(),
+  b1_2_equipment_modern: z.number().min(1).max(5).nullable().optional(),
+  b1_3_staff_appearance: z.number().min(1).max(5).nullable().optional(),
+  b1_4_facility_comfort: z.number().min(1).max(5).nullable().optional(),
+  b1_5_islamic_facilities: z.number().min(1).max(5).nullable().optional(),
+  // Reliability B2
+  b2_1_service_accuracy: z.number().min(1).max(5).nullable().optional(),
+  b2_2_punctuality: z.number().min(1).max(5).nullable().optional(),
+  b2_3_admin_accuracy: z.number().min(1).max(5).nullable().optional(),
+  b2_4_consistency: z.number().min(1).max(5).nullable().optional(),
+  b2_5_prayer_accommodation: z.number().min(1).max(5).nullable().optional(),
+  // Responsiveness B3
+  b3_1_quick_response: z.number().min(1).max(5).nullable().optional(),
+  b3_2_staff_willingness: z.number().min(1).max(5).nullable().optional(),
+  b3_3_complaint_handling: z.number().min(1).max(5).nullable().optional(),
+  b3_4_waiting_time: z.number().min(1).max(5).nullable().optional(),
+  b3_5_information_clarity: z.number().min(1).max(5).nullable().optional(),
+  // Assurance B4
+  b4_1_staff_competence: z.number().min(1).max(5).nullable().optional(),
+  b4_2_patient_trust: z.number().min(1).max(5).nullable().optional(),
+  b4_3_safety_feeling: z.number().min(1).max(5).nullable().optional(),
+  b4_4_staff_courtesy: z.number().min(1).max(5).nullable().optional(),
+  b4_5_knowledge: z.number().min(1).max(5).nullable().optional(),
+  // Empathy B5
+  b5_1_individual_attention: z.number().min(1).max(5).nullable().optional(),
+  b5_2_understanding_needs: z.number().min(1).max(5).nullable().optional(),
+  b5_3_respectful_treatment: z.number().min(1).max(5).nullable().optional(),
+  b5_4_followup_visits: z.number().min(1).max(5).nullable().optional(),
+  b5_5_operating_hours: z.number().min(1).max(5).nullable().optional(),
 
   // Bagian C - Herbal
   herbal_prescribed: z.boolean().nullable().optional(),
@@ -471,23 +512,21 @@ export const fullSurveySchema = z.object({
   // Wellness
   wellness_1: likert5Nullable, wellness_2: likert5Nullable, wellness_3: likert5Nullable,
 
-  // Bagian F - Spiritual 9 Dimensions (F1-F9)
-  f1_adab_islami: z.number().min(1).max(5).nullable().optional(),
-  f2_gender_concordance: z.number().min(1).max(5).nullable().optional(),
-  f3_prayer_accommodation: z.number().min(1).max(5).nullable().optional(),
-  f4_halal_assurance: z.number().min(1).max(5).nullable().optional(),
-  f5_tibb_nabawi: z.number().min(1).max(5).nullable().optional(),
-  f6_spiritual_activation: z.number().min(1).max(5).nullable().optional(),
-  f7_holistic_peace: z.number().min(1).max(5).nullable().optional(),
-  f8_spiritual_communication: z.number().min(1).max(5).nullable().optional(),
-  f9_reverse_coded: z.number().min(1).max(5).nullable().optional(),
+  // Bagian F - Spiritual 8 Dimensions (F1-F8) v2.1
+  f1_halal_assurance: z.number().min(1).max(5).nullable().optional(),
+  f2_tibb_nabawi: z.number().min(1).max(5).nullable().optional(),
+  f3_spiritual_activation: z.number().min(1).max(5).nullable().optional(),
+  f4_holistic_peace: z.number().min(1).max(5).nullable().optional(),
+  f5_spiritual_communication: z.number().min(1).max(5).nullable().optional(),
+  f6_tawakkal: z.number().min(1).max(5).nullable().optional(),
+  f7_ridha: z.number().min(1).max(5).nullable().optional(),
+  f8_reverse_coded: z.number().min(1).max(5).nullable().optional(),
 
   // Bagian G - NPS & Loyalty
   nps_score: z.number().min(0).max(10).nullable().optional(),
   visit_plan: z.string().nullable().optional(),
   has_recommended: z.string().nullable().optional(),
   recommendation_count: z.string().nullable().optional(),
-  wtp_price_increase: z.number().min(0).max(10).nullable().optional(),
 
   // Bagian H - Feedback (v3: checkbox + text)
   best_experience: z.string().nullable().optional(),

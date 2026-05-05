@@ -279,8 +279,8 @@ export default function SurveyTable({
                                       <span className="text-xs font-medium text-slate-700">{s.occupation || '-'}</span>
                                     </div>
                                     <div>
-                                      <span className="text-[11px] text-slate-400 block">Jenis Pasien</span>
-                                      <span className="text-xs font-medium text-slate-700">{s.patient_type || '-'}</span>
+                                      <span className="text-[11px] text-slate-400 block">Jenis Pembayaran</span>
+                                      <span className="text-xs font-medium text-slate-700">{s.payment_type || '-'}</span>
                                     </div>
                                     <div>
                                       <span className="text-[11px] text-slate-400 block">Kunjungan</span>
@@ -414,21 +414,20 @@ export default function SurveyTable({
                                     </div>
                                   )}
 
-                                  {/* Spiritual F1-F9 */}
-                                  {(s.f1_adab_islami || s.f2_gender_concordance || s.f3_prayer_accommodation || s.f4_halal_assurance || s.f5_tibb_nabawi || s.f6_spiritual_activation || s.f7_holistic_peace || s.f8_spiritual_communication || s.f9_reverse_coded) && (
+                                  {/* Spiritual F1-F8 */}
+                                  {(s.f1_halal_assurance || s.f2_tibb_nabawi || s.f3_spiritual_activation || s.f4_holistic_peace || s.f5_spiritual_communication || s.f6_tawakkal || s.f7_ridha || s.f8_reverse_coded) && (
                                     <div className="border-t border-slate-200 pt-3">
-                                      <span className="text-[11px] text-slate-400 block mb-2">Spiritual (F1-F9)</span>
+                                      <span className="text-[11px] text-slate-400 block mb-2">Spiritual (F1-F8)</span>
                                       <div className="flex flex-wrap gap-2">
                                         {[
-                                          { label: 'F1 Adab Islami', value: s.f1_adab_islami },
-                                          { label: 'F2 Gender Concord.', value: s.f2_gender_concordance },
-                                          { label: 'F3 Prayer Accom.', value: s.f3_prayer_accommodation },
-                                          { label: 'F4 Halal Assurance', value: s.f4_halal_assurance },
-                                          { label: 'F5 Tibb Nabawi', value: s.f5_tibb_nabawi },
-                                          { label: 'F6 Spiritual Act.', value: s.f6_spiritual_activation },
-                                          { label: 'F7 Holistic Peace', value: s.f7_holistic_peace },
-                                          { label: 'F8 Spiritual Comm.', value: s.f8_spiritual_communication },
-                                          { label: 'F9 (reversed)', value: s.f9_reverse_coded ? (6 - s.f9_reverse_coded) : null },
+                                          { label: 'F1 Halal Assurance', value: s.f1_halal_assurance },
+                                          { label: 'F2 Tibb Nabawi', value: s.f2_tibb_nabawi },
+                                          { label: 'F3 Spiritual Act.', value: s.f3_spiritual_activation },
+                                          { label: 'F4 Holistic Peace', value: s.f4_holistic_peace },
+                                          { label: 'F5 Spiritual Comm.', value: s.f5_spiritual_communication },
+                                          { label: 'F6 Tawakkal', value: s.f6_tawakkal },
+                                          { label: 'F7 Ridha', value: s.f7_ridha },
+                                          { label: 'F8 (reversed)', value: s.f8_reverse_coded ? (6 - s.f8_reverse_coded) : null },
                                         ].map((dim) => (
                                           <span
                                             key={dim.label}
