@@ -1,24 +1,18 @@
-import { z } from 'zod'
+// ============================================================
+// PVLS Ja'far Medika — Zod Validators
+// 24 Item Kuesioner: PV(12), TR(4), SAT(4), LOY(4)
+// ============================================================
 
-// ============================================================
-// DPEMS Zod Validators
-// Matching Supabase Schema v2.2 (SERVQUAL Item-Level + SCI Score)
-// 9 Sections (A-I): SERVQUAL now 5×5=25 items for PLS-SEM
-// RSU Ja'far Medika Karanganyar
-// ============================================================
+import { z } from 'zod'
 
 // --- Helpers ---
 const likert5 = z.number().min(1).max(5)
-const likert5Nullable = z.number().min(1).max(5).nullable().optional()
-const painScale = z.number().min(0).max(10)
-const npsScore = z.number().min(0).max(10)
 
 // ============================================================
-// Enum Constants (matching Kuesioner options)
+// Demographics Enum Constants
 // ============================================================
 
-// Bagian A: Demographics
-export const AGE_RANGES = ['< 20 tahun', '20–30 tahun', '31–45 tahun', '46–60 tahun', '> 60 tahun'] as const
+export const AGE_GROUPS = ['< 20 tahun', '20–30 tahun', '31–45 tahun', '46–60 tahun', '> 60 tahun'] as const
 export const GENDERS = ['Laki-laki', 'Perempuan'] as const
 export const EDUCATIONS = ['SD/sederajat', 'SMP/sederajat', 'SMA/sederajat', 'D1–D3', 'S1/D4', 'S2', 'S3'] as const
 export const OCCUPATIONS = [
@@ -33,21 +27,7 @@ export const OCCUPATIONS = [
   'Pensiunan',
   'Lainnya',
 ] as const
-export const PAYMENT_TYPES = ['Umum/Biaya Sendiri', 'Asuransi Swasta', 'Lainnya'] as const
-export const GENDER_PREFERENCES = ['Ya', 'Tidak', 'Tidak ada preferensi'] as const
-export const CONDITION_TYPES = [
-  'Stroke/Pasca Stroke',
-  'Nyeri Sendi (Rematik/OA)',
-  'Nyeri Punggung/Saraf Kejepit',
-  'Migrain/Sakit Kepala Kronis',
-  'Gangguan Tidur (Insomnia)',
-  'Kondisi Neurologis Lainnya',
-  'Wellness/Pemeliharaan Kesehatan',
-  'Lainnya',
-] as const
-
-// A5: Income ranges (World Bank LMIC classification)
-export const INCOME_RANGES = [
+export const INCOME_GROUPS = [
   '< Rp 3 juta',
   'Rp 3–5 juta',
   'Rp 5–10 juta',
@@ -55,25 +35,8 @@ export const INCOME_RANGES = [
   '> Rp 20 juta',
   'Tidak ingin menjawab',
 ] as const
-
-// A2b: Gender practitioner preference
-// GENDER_PREFERENCES defined above
-
-// A6: Payment type
-// PAYMENT_TYPES defined above
-
-// A7: Condition type (8 options with branching)
-// CONDITION_TYPES defined above
-
-// Condition types that map to each clinical instrument
-export const PAIN_CONDITIONS = [
-  'Nyeri Sendi (Rematik/OA)',
-  'Nyeri Punggung/Saraf Kejepit',
-  'Migrain/Sakit Kepala Kronis',
-] as const
-export const STROKE_CONDITION = 'Stroke/Pasca Stroke'
-export const INSOMNIA_CONDITION = 'Gangguan Tidur (Insomnia)'
-export const WELLNESS_CONDITION = 'Wellness/Pemeliharaan Kesehatan'
+export const SERVICE_TYPES = ['Akupunktur', 'Herbal', 'Keduanya'] as const
+export const VISIT_COUNTS = ['2–3 kali', '4–6 kali', '7–12 kali', '> 12 kali'] as const
 export const REFERRAL_SOURCES = [
   'Datang sendiri (tanpa rujukan)',
   'Dirujuk dokter Interna RS ini',
@@ -83,479 +46,170 @@ export const REFERRAL_SOURCES = [
   'Media sosial/internet',
   'Lainnya',
 ] as const
-export const VISIT_COUNTS = ['Pertama kali (ke-1)', '2–3 kali', '4–6 kali', '7–12 kali', '> 12 kali'] as const
-
-// Bagian E: Condition Change
-export const CONDITION_CHANGES = [
-  'Sangat Memburuk',
-  'Agak Memburuk',
-  'Tidak Berubah',
-  'Agak Membaik',
-  'Sangat Membaik',
-] as const
-
-// Bagian G: Loyalty
-export const VISIT_PLANS = [
-  'Akan lanjutkan sampai sembuh/optimal',
-  'Akan datang berkala untuk pemeliharaan',
-  'Akan berhenti setelah membaik',
-  'Belum memutuskan',
-  'Akan mencari alternatif lain',
-] as const
-export const RECOMMENDATION_STATUS = [
-  'Ya, sudah pernah',
-  'Belum, tapi berencana',
-  'Belum dan tidak berencana',
-] as const
-// G4: Recommendation count
-export const RECOMMENDATION_COUNTS = [
-  '0',
-  '1–2 orang',
-  '3–5 orang',
-  '> 5 orang',
-] as const
-
-// Bagian H: Liked Items (checkbox categories)
-export const H1_LIKED_CATEGORIES = [
-  {
-    title: 'Dokter & Pelayanan',
-    items: [
-      'Dokter ramah dan sabar menjelaskan',
-      'Dokter kompeten dan terpercaya',
-      'Terapi terasa nyaman, tidak menyakitkan',
-      'Dokter memperhatikan kondisi secara personal',
-    ],
-  },
-  {
-    title: 'Hasil Terapi',
-    items: [
-      'Kondisi/gejala terasa membaik setelah terapi',
-      'Herbal yang diberikan terasa cocok dan efektif',
-      'Perbaikan lebih cepat dibanding pengobatan sebelumnya',
-      'Merasa lebih tenang dan rileks setelah sesi terapi',
-    ],
-  },
-  {
-    title: 'Fasilitas & Kenyamanan',
-    items: [
-      'Ruangan bersih dan nyaman',
-      'Suasana tenang dan menenangkan',
-      'Lokasi RS mudah dijangkau',
-      'Fasilitas ibadah tersedia dan bersih',
-    ],
-  },
-  {
-    title: 'Proses & Administrasi',
-    items: [
-      'Pendaftaran mudah dan cepat',
-      'Waktu tunggu tidak terlalu lama',
-      'Biaya terjangkau dan transparan',
-      'Informasi layanan disampaikan dengan jelas',
-    ],
-  },
-] as const
-
-export const H2_SUGGESTED_CATEGORIES = [
-  {
-    title: 'Pelayanan Dokter',
-    items: [
-      'Waktu konsultasi lebih lama',
-      'Penjelasan tentang terapi lebih detail',
-      'Jam praktik dokter diperluas',
-      'Tersedia dokter akupuntur pengganti saat berhalangan',
-    ],
-  },
-  {
-    title: 'Fasilitas',
-    items: [
-      'Ruang tunggu lebih nyaman',
-      'Toilet/kamar mandi lebih bersih',
-      'Mushola/fasilitas ibadah diperbaiki',
-      'Area parkir diperluas',
-    ],
-  },
-  {
-    title: 'Proses & Antrian',
-    items: [
-      'Waktu tunggu lebih singkat',
-      'Sistem antrian lebih tertib dan jelas',
-      'Proses administrasi/pendaftaran lebih cepat',
-      'Ada sistem booking/janji temu online',
-    ],
-  },
-  {
-    title: 'Herbal & Apotek',
-    items: [
-      'Harga herbal lebih terjangkau',
-      'Stok herbal selalu tersedia',
-      'Penjelasan penggunaan herbal lebih lengkap',
-      'Tersedia brosur/leaflet tentang produk herbal',
-    ],
-  },
-  {
-    title: 'Informasi & Komunikasi',
-    items: [
-      'Tersedia brosur/leaflet tentang akupuntur-herbal',
-      'Informasi jadwal dokter lebih jelas',
-      'Ada nomor WhatsApp untuk konsultasi/tanya jadwal',
-      'Tersedia edukasi tentang manfaat terapi integratif',
-    ],
-  },
+export const MAIN_COMPLAINT_CATEGORIES = [
+  'Nyeri Sendi (Rematik/OA)',
+  'Nyeri Punggung/Saraf Kejepit',
+  'Migrain/Sakit Kepala Kronis',
+  'Stroke/Pasca Stroke',
+  'Gangguan Tidur (Insomnia)',
+  'Wellness/Pemeliharaan Kesehatan',
+  'Kondisi Neurologis Lainnya',
+  'Lainnya',
 ] as const
 
 // ============================================================
-// Step Schemas (per kuesioner section)
+// Screening Schema
 // ============================================================
 
-// --- Step 0: Bagian A - Data Responden (9 items) ---
+export const screeningSchema = z.object({
+  is_acupuncture_herbal_patient: z.literal(true, {
+    message: 'Anda harus merupakan pasien layanan akupunktur dan/atau herbal medicine',
+  }),
+  is_out_of_pocket: z.literal(true, {
+    message: 'Anda harus merupakan pasien yang membayar secara mandiri (out-of-pocket)',
+  }),
+  has_previous_visit: z.literal(true, {
+    message: 'Anda harus sudah pernah berkunjung minimal 1 kali sebelumnya',
+  }),
+})
+
+export type ScreeningFormData = z.infer<typeof screeningSchema>
+
+// ============================================================
+// Consent Schema
+// ============================================================
+
+export const consentSchema = z.object({
+  consent_agreed: z.literal(true, {
+    message: 'Anda harus menyetujui informed consent untuk melanjutkan',
+  }),
+})
+
+export type ConsentFormData = z.infer<typeof consentSchema>
+
+// ============================================================
+// Demographics Schema
+// ============================================================
+
 export const demographicsSchema = z.object({
-  age_range: z.string().min(1, 'Usia wajib dipilih'),
+  age_group: z.string().min(1, 'Kelompok usia wajib dipilih'),
   gender: z.string().min(1, 'Jenis kelamin wajib dipilih'),
-  gender_preference: z.string().min(1, 'Preferensi gender praktisi wajib dipilih'),
   education: z.string().min(1, 'Pendidikan wajib dipilih'),
   occupation: z.string().min(1, 'Pekerjaan wajib dipilih'),
-  income_range: z.string().min(1, 'Pendapatan wajib dipilih'),
-  payment_type: z.string().min(1, 'Jenis pembayaran wajib dipilih'),
-  condition_type: z.string().min(1, 'Keluhan utama wajib dipilih'),
-  visit_count: z.string().min(1, 'Kunjungan wajib dipilih'),
+  income_group: z.string().min(1, 'Pendapatan wajib dipilih'),
+  service_type: z.string().min(1, 'Jenis layanan wajib dipilih'),
+  visit_count: z.string().min(1, 'Jumlah kunjungan wajib dipilih'),
   referral_source: z.string().min(1, 'Sumber rujukan wajib dipilih'),
+  main_complaint_category: z.string().min(1, 'Kategori keluhan utama wajib dipilih'),
 })
 
-export type DemographicsData = z.infer<typeof demographicsSchema>
-
-// --- Step 1: Bagian B - SERVQUAL v2.2 (5 dimensions × 5 questions = 25 items) ---
-export const servqualSchema = z.object({
-  // B1 Tangibles (5 items)
-  b1_1_facility_condition: likert5,
-  b1_2_equipment_modern: likert5,
-  b1_3_staff_appearance: likert5,
-  b1_4_facility_comfort: likert5,
-  b1_5_islamic_facilities: likert5,
-  // B2 Reliability (5 items — B2.5 prayer accommodation moved from F3)
-  b2_1_service_accuracy: likert5,
-  b2_2_punctuality: likert5,
-  b2_3_admin_accuracy: likert5,
-  b2_4_consistency: likert5,
-  b2_5_prayer_accommodation: likert5,
-  // B3 Responsiveness (5 items — expanded from 4 in v2.1)
-  b3_1_quick_response: likert5,
-  b3_2_staff_willingness: likert5,
-  b3_3_complaint_handling: likert5,
-  b3_4_waiting_time: likert5,
-  b3_5_information_clarity: likert5,
-  // B4 Assurance (5 items — expanded from 4 in v2.1)
-  b4_1_staff_competence: likert5,
-  b4_2_patient_trust: likert5,
-  b4_3_safety_feeling: likert5,
-  b4_4_staff_courtesy: likert5,
-  b4_5_knowledge: likert5,
-  // B5 Empathy (5 items — expanded from 4 in v2.1)
-  b5_1_individual_attention: likert5,
-  b5_2_understanding_needs: likert5,
-  b5_3_respectful_treatment: likert5,
-  b5_4_followup_visits: likert5,
-  b5_5_operating_hours: likert5,
-})
-
-export type ServqualData = z.infer<typeof servqualSchema>
-
-// --- Step 2: Bagian C - Layanan Herbal ---
-export const herbalSchema = z.object({
-  herbal_prescribed: z.enum(['Ya', 'Tidak']),
-  // C2 only if herbal_prescribed = Ya
-  c2_herb_explanation: likert5Nullable,
-  c2_herb_usage_guide: likert5Nullable,
-  c2_herb_safety_trust: likert5Nullable,
-  c2_herb_availability: likert5Nullable,
-  c2_herb_affordability: likert5Nullable,
-  c2_herb_pharmacist: likert5Nullable,
-})
-
-export type HerbalData = z.infer<typeof herbalSchema>
-
-// --- Step 3: Bagian D - Clarity of Therapeutic Role (D1-D4) ---
-export const claritySchema = z.object({
-  d1_clarity_role: likert5,
-  d2_clarity_explanation: likert5,
-  d3_clarity_comfortable: likert5,
-  d4_clarity_specialist: likert5,
-})
-
-export type ClarityData = z.infer<typeof claritySchema>
-
-// --- Step 4: Bagian E - Clinical Outcomes (Branching) ---
-// E1: VAS for pain conditions (0-10)
-export const vasSchema = z.object({
-  pain_level_before: painScale,
-  pain_level_after: painScale,
-  condition_change: z.enum(CONDITION_CHANGES),
-})
-export type VasData = z.infer<typeof vasSchema>
-
-// E2: Barthel Index for stroke (10 activities × 2 timepoints)
-const barthelScore = z.number().int().min(0)
-export const barthelSchema = z.object({
-  barthel_eat_first: barthelScore, barthel_eat_current: barthelScore,
-  barthel_bath_first: barthelScore, barthel_bath_current: barthelScore,
-  barthel_groom_first: barthelScore, barthel_groom_current: barthelScore,
-  barthel_dress_first: barthelScore, barthel_dress_current: barthelScore,
-  barthel_toilet_first: barthelScore, barthel_toilet_current: barthelScore,
-  barthel_bowel_first: barthelScore, barthel_bowel_current: barthelScore,
-  barthel_bladder_first: barthelScore, barthel_bladder_current: barthelScore,
-  barthel_transfer_first: barthelScore, barthel_transfer_current: barthelScore,
-  barthel_mobility_first: barthelScore, barthel_mobility_current: barthelScore,
-  barthel_stairs_first: barthelScore, barthel_stairs_current: barthelScore,
-})
-export type BarthelData = z.infer<typeof barthelSchema>
-
-// E3: ISI for insomnia (7 items, 0-4 scale)
-const isiScore = z.number().int().min(0).max(4)
-export const isiSchema = z.object({
-  isi_1: isiScore, isi_2: isiScore, isi_3: isiScore, isi_4: isiScore,
-  isi_5: isiScore, isi_6: isiScore, isi_7: isiScore,
-})
-export type IsiData = z.infer<typeof isiSchema>
-
-// E4: Wellness WHOQOL-BREF (3 items, 1-5 scale)
-export const wellnessSchema = z.object({
-  wellness_1: likert5, wellness_2: likert5, wellness_3: likert5,
-})
-export type WellnessData = z.infer<typeof wellnessSchema>
-
-// Union schema for clinical outcomes
-export const clinicalOutcomesSchema = z.object({
-  // VAS (pain conditions)
-  pain_level_before: painScale.optional(),
-  pain_level_after: painScale.optional(),
-  condition_change: z.enum(CONDITION_CHANGES).optional(),
-  // Barthel (stroke)
-  barthel_eat_first: z.number().int().min(0).optional(), barthel_eat_current: z.number().int().min(0).optional(),
-  barthel_bath_first: z.number().int().min(0).optional(), barthel_bath_current: z.number().int().min(0).optional(),
-  barthel_groom_first: z.number().int().min(0).optional(), barthel_groom_current: z.number().int().min(0).optional(),
-  barthel_dress_first: z.number().int().min(0).optional(), barthel_dress_current: z.number().int().min(0).optional(),
-  barthel_toilet_first: z.number().int().min(0).optional(), barthel_toilet_current: z.number().int().min(0).optional(),
-  barthel_bowel_first: z.number().int().min(0).optional(), barthel_bowel_current: z.number().int().min(0).optional(),
-  barthel_bladder_first: z.number().int().min(0).optional(), barthel_bladder_current: z.number().int().min(0).optional(),
-  barthel_transfer_first: z.number().int().min(0).optional(), barthel_transfer_current: z.number().int().min(0).optional(),
-  barthel_mobility_first: z.number().int().min(0).optional(), barthel_mobility_current: z.number().int().min(0).optional(),
-  barthel_stairs_first: z.number().int().min(0).optional(), barthel_stairs_current: z.number().int().min(0).optional(),
-  // ISI (insomnia)
-  isi_1: z.number().int().min(0).max(4).optional(), isi_2: z.number().int().min(0).max(4).optional(),
-  isi_3: z.number().int().min(0).max(4).optional(), isi_4: z.number().int().min(0).max(4).optional(),
-  isi_5: z.number().int().min(0).max(4).optional(), isi_6: z.number().int().min(0).max(4).optional(),
-  isi_7: z.number().int().min(0).max(4).optional(),
-  // Wellness
-  wellness_1: likert5Nullable, wellness_2: likert5Nullable, wellness_3: likert5Nullable,
-})
-
-export type ClinicalOutcomesData = z.infer<typeof clinicalOutcomesSchema>
-
-// --- Step 5: Bagian F - Spiritual & Holistik (8 items, F1-F8) v2.1 ---
-export const spiritual8Schema = z.object({
-  f1_halal_assurance: likert5,
-  f2_tibb_nabawi: likert5,
-  f3_spiritual_activation: likert5,
-  f4_holistic_peace: likert5,
-  f5_spiritual_communication: likert5,
-  f6_tawakkal: likert5,
-  f7_ridha: likert5,
-  f8_reverse_coded: likert5,
-})
-
-export type Spiritual8Data = z.infer<typeof spiritual8Schema>
-
-// --- Step 6: Bagian G - NPS & Loyaltas ---
-export const npsLoyaltySchema = z.object({
-  nps_score: npsScore,
-  visit_plan: z.string().min(1),
-  has_recommended: z.string().min(1),
-  recommendation_count: z.string().min(1),
-})
-
-export type NpsLoyaltyData = z.infer<typeof npsLoyaltySchema>
-
-// --- Step 7: Bagian H - Masukan & Saran (v3: checkbox + text) ---
-export const feedbackSchema = z.object({
-  h1_liked: z.array(z.string()).default([]),
-  h1_liked_other: z.string().max(500).nullable().optional(),
-  h2_suggested: z.array(z.string()).default([]),
-  h2_suggested_other: z.string().max(500).nullable().optional(),
-  best_experience: z.string().max(2000).nullable().optional(),
-  improvement_suggestion: z.string().max(2000).nullable().optional(),
-  testimonial: z.string().max(2000).nullable().optional(),
-})
-
-export type FeedbackData = z.infer<typeof feedbackSchema>
-
-// --- Step 8: Bagian I - Willingness to Pay ---
-export const WTP_INCREASE_OPTIONS = [
-  'Ya, tetap datang',
-  'Mungkin, tergantung hasil terapi',
-  'Tidak, akan mencari alternatif lain',
-] as const
-export const WTP_PACKAGE_OPTIONS = [
-  'Ya, sangat tertarik',
-  'Tertarik, perlu pikir-pikir dulu',
-  'Tidak tertarik',
-] as const
-export const WTP_PAYMENT_OPTIONS = [
-  'Rp 150.000', 'Rp 200.000', 'Rp 250.000', 'Rp 300.000',
-  'Rp 350.000', 'Rp 400.000', 'Rp 450.000', 'Rp 500.000',
-  '> Rp 500.000', 'Tidak tahu/Tidak bersedia membayar',
-] as const
-
-export const wtpSchema = z.object({
-  wtp_cost_today: z.number().int().min(0),
-  wtp_increase_20: z.string().min(1),
-  wtp_package_interest: z.string().min(1),
-  wtp_max_acceptable: z.string().min(1),
-})
-
-export type WtpData = z.infer<typeof wtpSchema>
+export type DemographicsFormData = z.infer<typeof demographicsSchema>
 
 // ============================================================
-// FULL SURVEY Schema (API submission)
+// Perceived Value Schema (12 items)
 // ============================================================
 
-export const fullSurveySchema = z.object({
-  unit_id: z.string().min(1, 'Unit ID wajib diisi'),
+export const pvSchema = z.object({
+  pv1: likert5,
+  pv2: likert5,
+  pv3: likert5,
+  pv4: likert5,
+  pv5: likert5,
+  pv6: likert5,
+  pv7: likert5,
+  pv8: likert5,
+  pv9: likert5,
+  pv10: likert5,
+  pv11: likert5,
+  pv12: likert5,
+})
 
-  // Bagian A - Demographics
-  age_range: z.string().nullable().optional(),
-  gender: z.string().nullable().optional(),
-  gender_preference: z.string().nullable().optional(),
-  education: z.string().nullable().optional(),
-  occupation: z.string().nullable().optional(),
-  occupation_other: z.string().nullable().optional(),
-  income_range: z.string().nullable().optional(),
-  payment_type: z.string().nullable().optional(),
-  payment_type_other: z.string().nullable().optional(),
-  condition_type: z.string().nullable().optional(),
-  condition_type_other: z.string().nullable().optional(),
-  visit_count: z.string().nullable().optional(),
-  referral_source: z.string().nullable().optional(),
+export type PVFormData = z.infer<typeof pvSchema>
 
-  // Bagian B - SERVQUAL aggregate averages (computed client-side, overwritten by trigger)
-  tangibles: z.number().min(1).max(5).nullable().optional(),
-  reliability: z.number().min(1).max(5).nullable().optional(),
-  responsiveness: z.number().min(1).max(5).nullable().optional(),
-  assurance: z.number().min(1).max(5).nullable().optional(),
-  empathy: z.number().min(1).max(5).nullable().optional(),
+// ============================================================
+// Trust Schema (4 items)
+// ============================================================
 
-  // Bagian B - SERVQUAL item-level (v2.2: 25 items for PLS-SEM analysis)
-  // Tangibles B1
-  b1_1_facility_condition: z.number().min(1).max(5).nullable().optional(),
-  b1_2_equipment_modern: z.number().min(1).max(5).nullable().optional(),
-  b1_3_staff_appearance: z.number().min(1).max(5).nullable().optional(),
-  b1_4_facility_comfort: z.number().min(1).max(5).nullable().optional(),
-  b1_5_islamic_facilities: z.number().min(1).max(5).nullable().optional(),
-  // Reliability B2
-  b2_1_service_accuracy: z.number().min(1).max(5).nullable().optional(),
-  b2_2_punctuality: z.number().min(1).max(5).nullable().optional(),
-  b2_3_admin_accuracy: z.number().min(1).max(5).nullable().optional(),
-  b2_4_consistency: z.number().min(1).max(5).nullable().optional(),
-  b2_5_prayer_accommodation: z.number().min(1).max(5).nullable().optional(),
-  // Responsiveness B3
-  b3_1_quick_response: z.number().min(1).max(5).nullable().optional(),
-  b3_2_staff_willingness: z.number().min(1).max(5).nullable().optional(),
-  b3_3_complaint_handling: z.number().min(1).max(5).nullable().optional(),
-  b3_4_waiting_time: z.number().min(1).max(5).nullable().optional(),
-  b3_5_information_clarity: z.number().min(1).max(5).nullable().optional(),
-  // Assurance B4
-  b4_1_staff_competence: z.number().min(1).max(5).nullable().optional(),
-  b4_2_patient_trust: z.number().min(1).max(5).nullable().optional(),
-  b4_3_safety_feeling: z.number().min(1).max(5).nullable().optional(),
-  b4_4_staff_courtesy: z.number().min(1).max(5).nullable().optional(),
-  b4_5_knowledge: z.number().min(1).max(5).nullable().optional(),
-  // Empathy B5
-  b5_1_individual_attention: z.number().min(1).max(5).nullable().optional(),
-  b5_2_understanding_needs: z.number().min(1).max(5).nullable().optional(),
-  b5_3_respectful_treatment: z.number().min(1).max(5).nullable().optional(),
-  b5_4_followup_visits: z.number().min(1).max(5).nullable().optional(),
-  b5_5_operating_hours: z.number().min(1).max(5).nullable().optional(),
+export const trustSchema = z.object({
+  tr1: likert5,
+  tr2: likert5,
+  tr3: likert5,
+  tr4: likert5,
+})
 
-  // Bagian C - Herbal
-  herbal_prescribed: z.boolean().nullable().optional(),
-  herb_explanation: z.number().min(1).max(5).nullable().optional(),
-  herb_usage_guide: z.number().min(1).max(5).nullable().optional(),
-  herb_safety_trust: z.number().min(1).max(5).nullable().optional(),
-  herb_availability: z.number().min(1).max(5).nullable().optional(),
-  herb_affordability: z.number().min(1).max(5).nullable().optional(),
-  herb_pharmacist: z.number().min(1).max(5).nullable().optional(),
+export type TrustFormData = z.infer<typeof trustSchema>
 
-  // Bagian D - Clarity of Therapeutic Role (D1-D4)
-  d1_clarity_role: z.number().min(1).max(5).nullable().optional(),
-  d2_clarity_explanation: z.number().min(1).max(5).nullable().optional(),
-  d3_clarity_comfortable: z.number().min(1).max(5).nullable().optional(),
-  d4_clarity_specialist: z.number().min(1).max(5).nullable().optional(),
+// ============================================================
+// Satisfaction Schema (4 items)
+// ============================================================
 
-  // Bagian E - Clinical (branching based on condition_type)
-  pain_level_before: z.number().min(0).max(10).nullable().optional(),
-  pain_level_after: z.number().min(0).max(10).nullable().optional(),
-  condition_change: z.string().nullable().optional(),
-  // Barthel Index (stroke)
-  barthel_eat_first: z.number().int().min(0).nullable().optional(), barthel_eat_current: z.number().int().min(0).nullable().optional(),
-  barthel_bath_first: z.number().int().min(0).nullable().optional(), barthel_bath_current: z.number().int().min(0).nullable().optional(),
-  barthel_groom_first: z.number().int().min(0).nullable().optional(), barthel_groom_current: z.number().int().min(0).nullable().optional(),
-  barthel_dress_first: z.number().int().min(0).nullable().optional(), barthel_dress_current: z.number().int().min(0).nullable().optional(),
-  barthel_toilet_first: z.number().int().min(0).nullable().optional(), barthel_toilet_current: z.number().int().min(0).nullable().optional(),
-  barthel_bowel_first: z.number().int().min(0).nullable().optional(), barthel_bowel_current: z.number().int().min(0).nullable().optional(),
-  barthel_bladder_first: z.number().int().min(0).nullable().optional(), barthel_bladder_current: z.number().int().min(0).nullable().optional(),
-  barthel_transfer_first: z.number().int().min(0).nullable().optional(), barthel_transfer_current: z.number().int().min(0).nullable().optional(),
-  barthel_mobility_first: z.number().int().min(0).nullable().optional(), barthel_mobility_current: z.number().int().min(0).nullable().optional(),
-  barthel_stairs_first: z.number().int().min(0).nullable().optional(), barthel_stairs_current: z.number().int().min(0).nullable().optional(),
-  // ISI (insomnia)
-  isi_1: z.number().int().min(0).max(4).nullable().optional(), isi_2: z.number().int().min(0).max(4).nullable().optional(),
-  isi_3: z.number().int().min(0).max(4).nullable().optional(), isi_4: z.number().int().min(0).max(4).nullable().optional(),
-  isi_5: z.number().int().min(0).max(4).nullable().optional(), isi_6: z.number().int().min(0).max(4).nullable().optional(),
-  isi_7: z.number().int().min(0).max(4).nullable().optional(),
-  // Wellness
-  wellness_1: likert5Nullable, wellness_2: likert5Nullable, wellness_3: likert5Nullable,
+export const satisfactionSchema = z.object({
+  sat1: likert5,
+  sat2: likert5,
+  sat3: likert5,
+  sat4: likert5,
+})
 
-  // Bagian F - Spiritual 8 Dimensions (F1-F8) v2.1
-  f1_halal_assurance: z.number().min(1).max(5).nullable().optional(),
-  f2_tibb_nabawi: z.number().min(1).max(5).nullable().optional(),
-  f3_spiritual_activation: z.number().min(1).max(5).nullable().optional(),
-  f4_holistic_peace: z.number().min(1).max(5).nullable().optional(),
-  f5_spiritual_communication: z.number().min(1).max(5).nullable().optional(),
-  f6_tawakkal: z.number().min(1).max(5).nullable().optional(),
-  f7_ridha: z.number().min(1).max(5).nullable().optional(),
-  f8_reverse_coded: z.number().min(1).max(5).nullable().optional(),
+export type SatisfactionFormData = z.infer<typeof satisfactionSchema>
 
-  // Bagian G - NPS & Loyalty
-  nps_score: z.number().min(0).max(10).nullable().optional(),
-  visit_plan: z.string().nullable().optional(),
-  has_recommended: z.string().nullable().optional(),
-  recommendation_count: z.string().nullable().optional(),
+// ============================================================
+// Loyalty Schema (4 items)
+// ============================================================
 
-  // Bagian H - Feedback (v3: checkbox + text)
-  best_experience: z.string().nullable().optional(),
-  improvement_suggestion: z.string().nullable().optional(),
-  testimonial: z.string().nullable().optional(),
-  h1_liked: z.array(z.string()).nullable().optional(),
-  h1_liked_other: z.string().nullable().optional(),
-  h2_suggested: z.array(z.string()).nullable().optional(),
-  h2_suggested_other: z.string().nullable().optional(),
+export const loyaltySchema = z.object({
+  loy1: likert5,
+  loy2: likert5,
+  loy3: likert5,
+  loy4: likert5,
+})
 
-  // Bagian I - WTP
-  wtp_cost_today: z.number().int().min(0).nullable().optional(),
-  wtp_increase_20: z.string().nullable().optional(),
-  wtp_package_interest: z.string().nullable().optional(),
-  wtp_max_acceptable: z.string().nullable().optional(),
+export type LoyaltyFormData = z.infer<typeof loyaltySchema>
 
-  // Full individual responses (JSONB)
-  responses_json: z.record(z.string(), z.unknown()).nullable().optional(),
+// ============================================================
+// Full Survey Submission Schema
+// ============================================================
+
+export const fullSurveySubmissionSchema = z.object({
+  // Consent & Screening
+  consent_agreed: z.literal(true),
+  eligible: z.literal(true),
+
+  // Demographics
+  age_group: z.string().min(1),
+  gender: z.string().min(1),
+  education: z.string().min(1),
+  occupation: z.string().min(1),
+  income_group: z.string().min(1),
+  service_type: z.string().min(1),
+  visit_count: z.string().min(1),
+  referral_source: z.string().min(1),
+  main_complaint_category: z.string().min(1),
+
+  // PV (12 items)
+  pv1: likert5, pv2: likert5, pv3: likert5,
+  pv4: likert5, pv5: likert5, pv6: likert5,
+  pv7: likert5, pv8: likert5, pv9: likert5,
+  pv10: likert5, pv11: likert5, pv12: likert5,
+
+  // Trust (4 items)
+  tr1: likert5, tr2: likert5, tr3: likert5, tr4: likert5,
+
+  // Satisfaction (4 items)
+  sat1: likert5, sat2: likert5, sat3: likert5, sat4: likert5,
+
+  // Loyalty (4 items)
+  loy1: likert5, loy2: likert5, loy3: likert5, loy4: likert5,
 
   // Metadata
-  session_duration_seconds: z.number().int().nullable().optional(),
-  device_type: z.string().nullable().optional(),
+  survey_version: z.string().optional(),
+  consent_version: z.string().optional(),
+  duration_seconds: z.number().int().min(0).optional(),
 })
 
-export type FullSurveyData = z.infer<typeof fullSurveySchema>
+export type FullSurveySubmission = z.infer<typeof fullSurveySubmissionSchema>
 
 // ============================================================
-// Helper: Compute SERVQUAL dimension average from individual questions
-// Used in survey form before submission
+// Backward compat: computeDimensionAverage (kept for any remaining code)
 // ============================================================
 
 export function computeDimensionAverage(scores: (number | null | undefined)[]): number | null {

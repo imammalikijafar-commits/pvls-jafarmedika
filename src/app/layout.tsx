@@ -28,18 +28,20 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "DPEMS - Digital Patient Experience Monitoring System | RSU Ja'far Medika",
+  title: "PVLS Ja'far Medika — Survei Kepuatan dan Loyalitas Pasien",
   description:
-    "Sistem monitoring pengalaman pasien berbasis digital untuk RSU Ja'far Medika Karanganyar. Fokus pada Integrative Medicine: Akupuntur, Herbal, dan Stroke Rehabilitation.",
+    "Survei Kepuasan dan Loyalitas Pasien Layanan Akupunktur dan Herbal RSU Ja'far Medika. Penelitian tentang Pengaruh Nilai yang Dipersepsikan terhadap Loyalitas Pasien.",
   keywords: [
-    "DPEMS",
-    "Patient Experience",
+    "PVLS",
+    "Perceived Value",
+    "Loyalty",
+    "Trust",
+    "Satisfaction",
     "RSU Ja'far Medika",
-    "Integrative Medicine",
-    "Akupuntur",
+    "Akupunktur",
     "Herbal",
-    "Stroke Rehabilitation",
-    "SERVQUAL",
+    "Integrative Medicine",
+    "Survei Pasien",
   ],
   authors: [{ name: "Imam Maliki Ja'far" }],
   icons: {

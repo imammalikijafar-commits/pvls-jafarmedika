@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSurvey, getUnitByQrCode, getSurveysPaginated } from '@/lib/db'
-import { fullSurveySubmissionSchema as fullSurveySchema } from '@/lib/validators'
+import { fullSurveySchema } from '@/lib/validators'
 
 const ACUPUNTUR_HERBAL_QR = 'akupuntur-herbal'
 
