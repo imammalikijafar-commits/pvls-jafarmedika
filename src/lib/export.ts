@@ -65,17 +65,25 @@ export const EXPORT_HEADERS: Record<string, string> = {
   extreme_pattern_flag: 'Extreme_Pattern',
 }
 
+// --- Safe CSV escaping (handles quotes, commas, newlines) ---
+function csvEscape(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  const str = String(value)
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
 // --- Convert responses to CSV string ---
 export function responsesToCSV(responses: SurveyResponse[]): string {
   const columns = ALL_EXPORT_COLUMNS as unknown as string[]
-  const header = columns.map((col) => EXPORT_HEADERS[col] || col).join(',')
+  const header = columns.map((col) => csvEscape(EXPORT_HEADERS[col] || col)).join(',')
 
   const rows = responses.map((r) =>
     columns.map((col) => {
       const val = (r as Record<string, unknown>)[col]
-      if (val === null || val === undefined) return ''
-      if (typeof val === 'string' && val.includes(',')) return `"${val}"`
-      return String(val)
+      return csvEscape(val)
     }).join(',')
   )
 

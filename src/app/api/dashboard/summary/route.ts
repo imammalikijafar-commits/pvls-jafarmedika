@@ -4,11 +4,20 @@
 // ============================================================
 
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, requireAdmin } from '@/lib/supabase/server'
 import type { DashboardSummary } from '@/lib/types'
 
 export async function GET() {
   try {
+    // Auth check — hanya user yang sudah login bisa akses
+    const user = await requireAdmin()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized — silakan login terlebih dahulu' },
+        { status: 401 }
+      )
+    }
+
     const supabase = createAdminClient()
 
     // Fetch total respondents count

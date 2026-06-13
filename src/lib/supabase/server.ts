@@ -36,8 +36,42 @@ export async function createSupabaseServerClient() {
 }
 
 // ============================================================
+// Auth Check — memastikan user sudah login DAN terdaftar di
+// tabel admin_users dengan role admin/researcher dan is_active
+// ============================================================
+export async function requireAdmin() {
+  const supabase = await createSupabaseServerClient()
+
+  // Step 1: Cek apakah user sudah login via Supabase Auth
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return null
+  }
+
+  // Step 2: Cek apakah user terdaftar di admin_users dengan role yang valid
+  const { data: admin, error: adminError } = await supabase
+    .from('admin_users')
+    .select('id, role, is_active')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .in('role', ['admin', 'researcher'])
+    .maybeSingle()
+
+  if (adminError || !admin) {
+    return null
+  }
+
+  return user
+}
+
+// ============================================================
 // Admin Client (Service Role)
 // BYPASS RLS — gunakan HATI-HATI hanya untuk admin/dashboard
+// WAJIB panggil requireAdmin() dulu sebelum createAdminClient()
 // ============================================================
 export function createAdminClient() {
   return createServerClient(

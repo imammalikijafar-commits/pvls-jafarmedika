@@ -4,13 +4,22 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, requireAdmin } from '@/lib/supabase/server'
 import { responsesToCSV, responsesToSheetData } from '@/lib/export'
 import type { SurveyResponse } from '@/lib/types'
 import * as XLSX from 'xlsx'
 
 export async function GET(request: NextRequest) {
   try {
+    // Auth check — hanya user yang sudah login bisa akses
+    const user = await requireAdmin()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized — silakan login terlebih dahulu' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'csv'
 

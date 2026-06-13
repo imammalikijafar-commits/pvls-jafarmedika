@@ -378,7 +378,7 @@ export default function LandingPage() {
             </span>
           </div>
           <p className="text-xs text-slate-400">
-            Survei Kepuatan dan Loyalitas Pasien Layanan Akupunktur dan Herbal — RSU Ja&apos;far Medika Karanganyar
+            Survei Kepuasan dan Loyalitas Pasien Layanan Akupunktur dan Herbal — RSU Ja&apos;far Medika Karanganyar
           </p>
           <p className="text-xs text-slate-300 mt-1">
             Penelitian Tesis — Pengaruh Nilai yang Dipersepsikan terhadap Loyalitas Pasien

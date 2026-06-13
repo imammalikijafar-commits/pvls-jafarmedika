@@ -28,7 +28,7 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "PVLS Ja'far Medika — Survei Kepuatan dan Loyalitas Pasien",
+  title: "PVLS Ja'far Medika — Survei Kepuasan dan Loyalitas Pasien",
   description:
     "Survei Kepuasan dan Loyalitas Pasien Layanan Akupunktur dan Herbal RSU Ja'far Medika. Penelitian tentang Pengaruh Nilai yang Dipersepsikan terhadap Loyalitas Pasien.",
   keywords: [
